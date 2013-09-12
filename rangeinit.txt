@@ -1,0 +1,22 @@
+### RANGE MEASUREMENT INIT FILE ###
+
+#FILENAMES
+project = testproj
+datasave = secondmeas
+option = measure
+
+#FREQUENCY
+fstart = 1e9
+fstop = 4e9
+npts = 201
+
+#POLARIZATION
+pol = H
+
+#ROTATION
+ares = 1
+start = 000.00
+stop =  040.00
+
+#COMMENTS
+Because we messed up the first one!

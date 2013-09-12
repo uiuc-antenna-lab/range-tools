@@ -1,0 +1,154 @@
+2013-09-10 13:08:22
+	Datafile: firstmeas
+	Frequency: 1ghz - 3ghz, 201 points
+	Rotation: 0-020.00 degrees, approx 1 degree resolution
+	Polarization: V
+Testing today!
+
+2013-09-10 13:09:33
+	Datafile: secondmeas
+	Frequency: 1ghz - 3ghz, 201 points
+	Rotation: 0-020.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:11:23
+	Datafile: secondmeas
+	Frequency: 1ghz - 3ghz, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:21:52
+	Datafile: secondmeas
+	Frequency: 1ghz - 3ghz, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:22:41
+	Datafile: secondmeas
+	Frequency: 1e9 - 3e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:28:12
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-050.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:34:00
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-050.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:39:48
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-050.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-10 13:42:01
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-050.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 13:45:57
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-050.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:01:48
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-050.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:11:34
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:13:57
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:16:44
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:19:44
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:20:38
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:22:45
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-020.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:25:31
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-180.00 degrees, approx .1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:27:47
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-040.00 degrees, approx .1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:29:38
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-040.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 14:33:25
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-040.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-10 17:15:34
+	Datafile: secondmeas
+	Frequency: 1e9 - 4e9, 201 points
+	Rotation: 000.00-000.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
