@@ -5,7 +5,8 @@ Created on Fri Sep 06 14:30:23 2013
 @author: Kurt
 """
 
-import numpy, pyvisa, time, datetime, pylab
+import numpy, pyvisa, time, datetime
+from pylab import *
 import scipy.io as sio
 from visa import *
 
@@ -92,13 +93,13 @@ position = getpos()
 if pol == 'H':
     print "H-pol"
     if position >= 0 or position <= 180:         #go via shortest path to the start position
-        pos.write("MOVE,B,CCWGO,000.00;")    #<- add start pos. here
+        #pos.write("MOVE,B,CCWGO,000.00;")    #<- add start pos. here
         raw_input('wait for positioner to stop and then press enter')        
 #        while getpos() != temp:
 #            time.sleep(1)
 #            temp = getpos()            
     else:
-        pos.write("MOVE,B,CWGO,000.00")    
+        #pos.write("MOVE,B,CWGO,000.00")    
         raw_input('wait for positioner to stop and then press enter')
 #        while getpos() != temp:  
 #            time.sleep(1)
@@ -107,13 +108,13 @@ if pol == 'H':
 if pol == 'V':
     print "V-pol"
     if position >= 90 or position <= 270:         #go via shortest path to the start position
-        pos.write("MOVE,B,CWGO,090.00;")    #<- add start pos. here
+        #pos.write("MOVE,B,CWGO,090.00;")    #<- add start pos. here
         raw_input('wait for positioner to stop and then press enter')        
 #        while getpos() != temp:
 #            time.sleep(1)
 #            temp = getpos()            
     else:
-        pos.write("MOVE,B,CCWGO,090.00") 
+        #pos.write("MOVE,B,CCWGO,090.00") 
         raw_input('wait for positioner to stop and then press enter')
 #        while getpos() != temp:  
 #            time.sleep(1)
@@ -134,6 +135,21 @@ s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))   #why do we have to do 
 #SET TRAVEL VELOCITY
 stopflag = 0
 pos.write("VELOCITY,A,003.00;")
+
+#INITIALIZE QUICKPLOT FIGURE
+ion()
+figure(figsize = (8,5))
+xlim([0,360])
+ylim([-100,0])
+qpobj, = plot(0,0)
+QPx = []
+QPy = []
+title('Uncalibrated Pattern Data')
+ylabel('Thru power, dB')
+xlabel('Rotation, deg')
+
+
+#START MOTION
 pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
 while getpos() == ANG[ind]:
      dummy = 1                         #pause for positioner to start
@@ -148,7 +164,16 @@ while getpos() != ANG[ind]:             #motion check loop
                                         #get net measurement set from analyzer
     s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
     ANG.append(getpos())
-    print ANG[ind]
+    
+                                        #take off one data point for quickplot
+    line = s21[ind]
+    qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[0]))))
+    QPx.append(ANG[ind])
+    QPy.append(qp)
+    qpobj.set_ydata(QPy)
+    qpobj.set_xdata(QPx)          # update the data on quickplot
+    draw()                        # redraw the canvas
+    pause(0.01)                   #locks up w/o pause
 
 #CONVERT COLLECTED DATA INTO R+jI form
 print "Acquisition complete\n Converting output data"
@@ -179,3 +204,7 @@ sio.savemat(filename,{'S21':S21, 'f':freq, 'angle':ANG})
 #PLOT PATTERN
 splot = 20*numpy.log10(abs(S21[:,0]))
 #plot(ANG,splot)
+
+#CLEAN UP
+ioff()
+show()      # redraw the canvas

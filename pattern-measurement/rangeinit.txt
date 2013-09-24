@@ -16,7 +16,7 @@ pol = V
 #ROTATION
 ares = 1
 start = 000.00
-stop =  040.00
+stop =  090.00
 
 #COMMENTS
 Because we messed up the first one!
