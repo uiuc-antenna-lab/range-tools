@@ -7,11 +7,11 @@ option = measure
 
 #FREQUENCY
 fstart = 1e9
-fstop = 4e9
+fstop = 2e9
 npts = 201
 
 #POLARIZATION
-pol = H
+pol = V
 
 #ROTATION
 ares = 1

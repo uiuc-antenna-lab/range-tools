@@ -82,7 +82,7 @@ else:
         time.sleep(5)
         temp = getpos()
         print "Initializing turntable position"
-
+        
 #SET POLARIZATION ON SGH
 print "Setting SGH polarization"
 pos.write("SCALE,B,360;")
@@ -93,27 +93,31 @@ if pol == 'H':
     print "H-pol"
     if position >= 0 or position <= 180:         #go via shortest path to the start position
         pos.write("MOVE,B,CCWGO,000.00;")    #<- add start pos. here
-        while getpos() != temp:
-            time.sleep(1)
-            temp = getpos()            
+        raw_input('wait for positioner to stop and then press enter')        
+#        while getpos() != temp:
+#            time.sleep(1)
+#            temp = getpos()            
     else:
         pos.write("MOVE,B,CWGO,000.00")    
-        while getpos() != temp:  
-            time.sleep(1)
-            temp = getpos()
+        raw_input('wait for positioner to stop and then press enter')
+#        while getpos() != temp:  
+#            time.sleep(1)
+#            temp = getpos()
          
 if pol == 'V':
     print "V-pol"
     if position >= 90 or position <= 270:         #go via shortest path to the start position
-        pos.write("MOVE,B,CCWGO,090.00;")    #<- add start pos. here
-        while getpos() != temp:
-            time.sleep(1)
-            temp = getpos()            
+        pos.write("MOVE,B,CWGO,090.00;")    #<- add start pos. here
+        raw_input('wait for positioner to stop and then press enter')        
+#        while getpos() != temp:
+#            time.sleep(1)
+#            temp = getpos()            
     else:
-        pos.write("MOVE,B,CWGO,090.00")    
-        while getpos() != temp:  
-            time.sleep(1)
-            temp = getpos()
+        pos.write("MOVE,B,CCWGO,090.00") 
+        raw_input('wait for positioner to stop and then press enter')
+#        while getpos() != temp:  
+#            time.sleep(1)
+#            temp = getpos()
 
 pos.write("PRIMARY,A;")
 time.sleep(3)
