@@ -45,8 +45,21 @@ POSref = 'GPIB0::17'
 #create instrument objects
 pna = instrument(PNAref)
 pos = instrument(POSref)
+pos.clear()
+pos.write("WINDOW,A,001.50;")
+pos.write("WINDOW,B,001.50;")
 
 #function to grab current turntable location from positioner
+def getwindowa():
+    windowa = pos.ask("DISPLAY,A,WINDOW;").split(',')
+    windowa = windowa[2].split(';')
+    windowa = float(windowa[0])
+    return windowa
+def getwindowb():
+    windowb = pos.ask("DISPLAY,B,WINDOW;").split(',')
+    windowb = windowb[2].split(';')
+    windowb = float(windowb[0])
+    return windowb
 def getpos():
     line = pos.ask("DISPLAY,A,POSITION;").split(',')
     position = line[2].split(';')
@@ -62,7 +75,24 @@ def getvel():
     velocity = movement_str[2].split(';')
     velocity = abs(float(velocity[0]))
     return velocity
-
+def needinita():
+    inita = 0
+    positiona = getpos()
+    windowa = getwindowa()
+    if abs(positiona - float(start)) > windowa:
+        inita=1
+    return inita
+def needinitb():
+    initb = 0
+    positionb = getposb()
+    windowb = getwindowb()
+    if pol == 'V':
+        bstart = "090.00"
+    else:
+        bstart = "000.00"
+    if abs(positionb - float(bstart)) > windowb:
+        initb=1
+    return initb
 #initialization of PNA
 print pna.ask("*IDN?")                            #get the PNA info for reference
 pna.write("SYST:FPReset")                         #factory preset
@@ -82,72 +112,87 @@ if option != 'sgh':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
-    pos.write("WINDOW,A,001.50;")
-    pos.write("WINDOW,B,001.50;")
+
     
     position = getpos()   
-    if position < 5 or position > 355 :
-        pos.write("MOVE,A,CWGO,010.00;")
-        time.sleep(5)      
+    print getpos()
+#    if position < 5 or position > 355 :
+#        pos.write("MOVE,A,CWGO,010.00;")
+#        print "initializing position please wait"
+#        time.sleep(5)      
                   #out of bounds value for angle, used to intialize while loop below
-    if position >= 180:         #go via shortest path to the start position
-        print "position greater than 180"
-        pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
-        while getvel() == 0:
-            niente = 0
-        while getvel() != 0:
-            time.sleep(5)
-            print "Initializing turntable position"
+    init=needinita()
+    if init:
+        if position >= 180:         #go via shortest path to the start position
+            print "position greater than 180"
+            pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
+            time.sleep(2)        
+            while getvel() == 0:
+                niente = 0
+            while getvel() != 0:
+                time.sleep(5)
+                print "Initializing turntable position"
 
-    else:
-        print "position less than 180"
-        pos.write("MOVE,A,CCWCHECK,"+start+";")  
-        while getvel() == 0:
-            niente = 0
-            print "Vel = 0"
-        while getvel() != 0:
-            time.sleep(5)
-            print "Initializing turntable position"
+        else:
+            print "position less than 180"
+            pos.write("MOVE,A,CCWCHECK,"+start+";") 
+            time.sleep(2) 
+            while getvel() == 0:
+                niente = 0
+                print "Vel = 0"
+            while getvel() != 0:
+                time.sleep(5)
+                print "Initializing turntable position"
 
         
 #SET POLARIZATION ON SGH -- do regardless of sgh or real measurement?  issues w/ movement?
 print "Setting SGH polarization"
+break1 = 0
+niente = 0
 pos.write("SCALE,B,360;")
 pos.write("PRIMARY,B;")
 position = getposb()
 if pol == 'H':
     print "H-pol"
-    if position >= 0 or position <= 180:         #go via shortest path to the start position
-        pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
-        while getvel() == 0:
-            niente = 0
-        while getvel() != 0:
-            time.sleep(5)
-            print "Initializing gainhorn position"       
-    else:
-        pos.write("MOVE,B,CWCHECK,000.00")    
-        while getvel() == 0:
-            niente = 0
-        while getvel() != 0:
-            time.sleep(5)
-            print "Initializing gainhorn position"
+    init=needinitb()
+    if init:
+        if position >= 0 or position <= 180:         #go via shortest path to the start position
+            pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
+            time.sleep(2) 
+            while getvel() == 0:
+                niente = 0
+            while getvel() != 0:
+                time.sleep(5)
+                print "Initializing gainhorn position"       
+        else:
+            pos.write("MOVE,B,CWCHECK,000.00")    
+            time.sleep(2) 
+            while getvel() == 0:
+                niente = 0
+            while getvel() != 0:
+                time.sleep(5)
+                print "Initializing gainhorn position"
          
 if pol == 'V':
     print "V-pol"
-    if position >= 90 or position <= 270:         #go via shortest path to the start position
-        pos.write("MOVE,B,CCWCHECK,090.00;")    #<- add start pos. here
-        while getvel() == 0:
-            niente = 0
-        while getvel() != 0:
-            time.sleep(5)
-            print "Initializing gainhorn position"     
-    else:
-        pos.write("MOVE,B,CWCHECK,090.00") 
-        while getvel() == 0:
-            niente = 0
-        while getvel() != 0:
-            time.sleep(5)
-            print "Initializing gainhorn position"
+    init = needinitb()
+    if init:
+        if position >= 90 or position <= 270:         #go via shortest path to the start position
+            pos.write("MOVE,B,CWCHECK,090.00;")    #<- add start pos. here
+            time.sleep(2)       
+            while getvel() == 0 and break1 != 1:
+                niente = 0;
+            while getvel() != 0:
+                time.sleep(5)
+                print "Initializing gainhorn position"     
+        else:
+            pos.write("MOVE,B,CCWCHECK,090.00") 
+            time.sleep(2) 
+            while getvel() == 0:
+                niente = 0
+            while getvel() != 0:
+                time.sleep(5)
+                print "Initializing gainhorn position"
 
 pos.write("PRIMARY,A;")
 print "STARTING MEASUREMENT: SEE FIGURE 1"
@@ -178,7 +223,7 @@ xlabel('Rotation, deg')
 
 
 #MAIN ACQUISITION LOOP
-if option != 'sgh'  #if not in sgh mode, do full measurement
+if option != 'sgh':  #if not in sgh mode, do full measurement
     pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
     while getpos() == ANG[ind]:
         dummy = 1                         #pause for positioner to start
