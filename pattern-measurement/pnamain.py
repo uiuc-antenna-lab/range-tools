@@ -77,45 +77,40 @@ pna.write("SENS1:SWE:POIN "+npts)
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
 
-#initialization of positioner
-pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
-pos.write("PRIMARY,A;")
-pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
-pos.write("WINDOW,A,001.50;")
-pos.write("WINDOW,B,001.50;")
+#initialization of positioner, bypass if sgh option used
+if option != 'sgh':
+    pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
+    pos.write("PRIMARY,A;")
+    pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
+    pos.write("WINDOW,A,001.50;")
+    pos.write("WINDOW,B,001.50;")
+    
+    position = getpos()   
+    if position < 5 or position > 355 :
+        pos.write("MOVE,A,CWGO,010.00;")
+        time.sleep(5)      
+                  #out of bounds value for angle, used to intialize while loop below
+    if position >= 180:         #go via shortest path to the start position
+        print "position greater than 180"
+        pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
+        while getvel() == 0:
+            niente = 0
+        while getvel() != 0:
+            time.sleep(5)
+            print "Initializing turntable position"
 
-position = getpos()   
-if position < 5 or position > 355 :
-    pos.write("MOVE,A,CWGO,010.00;")
-    time.sleep(5)      
-temp = 361                  #out of bounds value for angle, used to intialize while loop below
-if position >= 180:         #go via shortest path to the start position
-    print "position greater than 180"
-    pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
-    while getvel() == 0:
-        niente = 0
-    while getvel() != 0:
-        time.sleep(5)
-        print "Initializing turntable position"
-#    while getpos() != temp:
-#        time.sleep(5)
-#        temp = getpos()
-#        print "Initializing turntable position"
-else:
-    print "position less than 180"
-    pos.write("MOVE,A,CCWCHECK,"+start+";")  
-    while getvel() == 0:
-        niente = 0
-        print "Vel = 0"
-    while getvel() != 0:
-        time.sleep(5)
-        print "Initializing turntable position"
-#    while getpos() != temp:  
-#        time.sleep(5)
-#        temp = getpos()
-#        print "Initializing turntable position"
+    else:
+        print "position less than 180"
+        pos.write("MOVE,A,CCWCHECK,"+start+";")  
+        while getvel() == 0:
+            niente = 0
+            print "Vel = 0"
+        while getvel() != 0:
+            time.sleep(5)
+            print "Initializing turntable position"
+
         
-#SET POLARIZATION ON SGH
+#SET POLARIZATION ON SGH -- do regardless of sgh or real measurement?  issues w/ movement?
 print "Setting SGH polarization"
 pos.write("SCALE,B,360;")
 pos.write("PRIMARY,B;")
@@ -156,8 +151,6 @@ if pol == 'V':
 
 pos.write("PRIMARY,A;")
 print "STARTING MEASUREMENT: SEE FIGURE 1"
-#time.sleep(3)
-#pos.write("PRIMARY,A;")
 
 #PREPARE FOR ACQUISITION
 ind = 0     #intializing angle and data indeces
@@ -184,31 +177,35 @@ ylabel('Thru power, dB')
 xlabel('Rotation, deg')
 
 
-#START MOTION
-pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
-while getpos() == ANG[ind]:
-     dummy = 1                         #pause for positioner to start
-while getpos() != ANG[ind]:             #motion check loop
-    while getpos() <= ANG[ind]+float(ares):        #between measurements loop
-        if abs(getpos()-float(stop))<=1:             #escape procedure for end <- add stop here
-            stopflag = 1
-            break        
-    ind =ind+1    
-    if stopflag:
-        break
+#MAIN ACQUISITION LOOP
+if option != 'sgh'  #if not in sgh mode, do full measurement
+    pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
+    while getpos() == ANG[ind]:
+        dummy = 1                         #pause for positioner to start
+    while getpos() != ANG[ind]:             #motion check loop
+        while getpos() <= ANG[ind]+float(ares):        #between measurements loop
+            if abs(getpos()-float(stop))<=1:             #escape procedure for end <- add stop here
+                stopflag = 1
+                break        
+        ind =ind+1    
+        if stopflag:
+            break
                                         #get net measurement set from analyzer
+        s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
+        ANG.append(getpos())
+        
+                                            #take off one data point for quickplot
+        line = s21[ind]
+        qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[0]))))
+        QPx.append(ANG[ind])
+        QPy.append(qp)
+        qpobj.set_ydata(QPy)
+        qpobj.set_xdata(QPx)          # update the data on quickplot
+        draw()                        # redraw the canvas
+        pause(0.01)                   #locks up w/o pause
+
+else:   #if sgh mode, take a single measurement with no movement
     s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
-    ANG.append(getpos())
-    
-                                        #take off one data point for quickplot
-    line = s21[ind]
-    qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[0]))))
-    QPx.append(ANG[ind])
-    QPy.append(qp)
-    qpobj.set_ydata(QPy)
-    qpobj.set_xdata(QPx)          # update the data on quickplot
-    draw()                        # redraw the canvas
-    pause(0.01)                   #locks up w/o pause
 
 #CONVERT COLLECTED DATA INTO R+jI form
 print "Acquisition complete\n Converting output data"
@@ -235,8 +232,6 @@ fid.close()
 freq = numpy.linspace(float(fstart),float(fstop),npts)
 filename = datafile+".mat"
 sio.savemat(filename,{'S21':S21, 'f':freq, 'angle':ANG})
-
-
 
 #CLEAN UP
 ioff()
