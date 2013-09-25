@@ -5,13 +5,15 @@ Created on Fri Sep 06 14:30:23 2013
 @author: Kurt
 """
 
+import sys
 import numpy, pyvisa, time, datetime
 from pylab import *
 import scipy.io as sio
 from visa import *
 
+print sys.argv[1]
 #LOAD IN TEST PARAMETERS FROM TEXT FILE
-fid = open('rangeinit.txt','r')
+fid = open(sys.argv[1],'r')
 fid.readline()
 fid.readline()
 fid.readline()
@@ -50,6 +52,16 @@ def getpos():
     position = line[2].split(';')
     position = float(position[0])
     return position
+def getposb():
+    lineb = pos.ask("DISPLAY,B,POSITION;").split(',')
+    positionb = lineb[2].split(';')
+    positionb = float(positionb[0])
+    return positionb
+def getvel():
+    movement_str = pos.ask("DISPLAY,ACTIVE;").split(',')
+    velocity = movement_str[2].split(';')
+    velocity = abs(float(velocity[0]))
+    return velocity
 
 #initialization of PNA
 print pna.ask("*IDN?")                            #get the PNA info for reference
@@ -69,60 +81,83 @@ pna.write("CALC:PAR:SEL 'MyMeas'")
 pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
 pos.write("PRIMARY,A;")
 pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
-position = getpos()         
+pos.write("WINDOW,A,001.50;")
+pos.write("WINDOW,B,001.50;")
+
+position = getpos()   
+if position < 5 or position > 355 :
+    pos.write("MOVE,A,CWGO,010.00;")
+    time.sleep(5)      
 temp = 361                  #out of bounds value for angle, used to intialize while loop below
 if position >= 180:         #go via shortest path to the start position
-    pos.write("MOVE,A,CWGO,"+start+";")    #<- add start pos. here
-    while getpos() != temp:
+    print "position greater than 180"
+    pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
+    while getvel() == 0:
+        niente = 0
+    while getvel() != 0:
         time.sleep(5)
-        temp = getpos()
         print "Initializing turntable position"
+#    while getpos() != temp:
+#        time.sleep(5)
+#        temp = getpos()
+#        print "Initializing turntable position"
 else:
-    pos.write("MOVE,A,CCWGO,"+start+";")    
-    while getpos() != temp:  
+    print "position less than 180"
+    pos.write("MOVE,A,CCWCHECK,"+start+";")  
+    while getvel() == 0:
+        niente = 0
+        print "Vel = 0"
+    while getvel() != 0:
         time.sleep(5)
-        temp = getpos()
         print "Initializing turntable position"
+#    while getpos() != temp:  
+#        time.sleep(5)
+#        temp = getpos()
+#        print "Initializing turntable position"
         
 #SET POLARIZATION ON SGH
 print "Setting SGH polarization"
 pos.write("SCALE,B,360;")
 pos.write("PRIMARY,B;")
-temp = getpos()
-position = getpos()
+position = getposb()
 if pol == 'H':
     print "H-pol"
     if position >= 0 or position <= 180:         #go via shortest path to the start position
-        #pos.write("MOVE,B,CCWGO,000.00;")    #<- add start pos. here
-        raw_input('wait for positioner to stop and then press enter')        
-#        while getpos() != temp:
-#            time.sleep(1)
-#            temp = getpos()            
+        pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
+        while getvel() == 0:
+            niente = 0
+        while getvel() != 0:
+            time.sleep(5)
+            print "Initializing gainhorn position"       
     else:
-        #pos.write("MOVE,B,CWGO,000.00")    
-        raw_input('wait for positioner to stop and then press enter')
-#        while getpos() != temp:  
-#            time.sleep(1)
-#            temp = getpos()
+        pos.write("MOVE,B,CWCHECK,000.00")    
+        while getvel() == 0:
+            niente = 0
+        while getvel() != 0:
+            time.sleep(5)
+            print "Initializing gainhorn position"
          
 if pol == 'V':
     print "V-pol"
     if position >= 90 or position <= 270:         #go via shortest path to the start position
-        #pos.write("MOVE,B,CWGO,090.00;")    #<- add start pos. here
-        raw_input('wait for positioner to stop and then press enter')        
-#        while getpos() != temp:
-#            time.sleep(1)
-#            temp = getpos()            
+        pos.write("MOVE,B,CCWCHECK,090.00;")    #<- add start pos. here
+        while getvel() == 0:
+            niente = 0
+        while getvel() != 0:
+            time.sleep(5)
+            print "Initializing gainhorn position"     
     else:
-        #pos.write("MOVE,B,CCWGO,090.00") 
-        raw_input('wait for positioner to stop and then press enter')
-#        while getpos() != temp:  
-#            time.sleep(1)
-#            temp = getpos()
+        pos.write("MOVE,B,CWCHECK,090.00") 
+        while getvel() == 0:
+            niente = 0
+        while getvel() != 0:
+            time.sleep(5)
+            print "Initializing gainhorn position"
 
 pos.write("PRIMARY,A;")
-time.sleep(3)
-pos.write("PRIMARY,A;")
+print "STARTING MEASUREMENT: SEE FIGURE 1"
+#time.sleep(3)
+#pos.write("PRIMARY,A;")
 
 #PREPARE FOR ACQUISITION
 ind = 0     #intializing angle and data indeces
@@ -201,9 +236,7 @@ freq = numpy.linspace(float(fstart),float(fstop),npts)
 filename = datafile+".mat"
 sio.savemat(filename,{'S21':S21, 'f':freq, 'angle':ANG})
 
-#PLOT PATTERN
-splot = 20*numpy.log10(abs(S21[:,0]))
-#plot(ANG,splot)
+
 
 #CLEAN UP
 ioff()
