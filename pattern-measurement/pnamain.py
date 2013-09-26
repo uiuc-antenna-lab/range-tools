@@ -10,6 +10,8 @@ import numpy, pyvisa, time, datetime
 from pylab import *
 import scipy.io as sio
 from visa import *
+import warnings
+warnings.filterwarnings("ignore")
 
 print sys.argv[1]
 #LOAD IN TEST PARAMETERS FROM TEXT FILE
@@ -50,8 +52,8 @@ pos.write("WINDOW,A,001.50;")
 pos.write("WINDOW,B,001.50;")
 
 #function to grab current turntable location from positioner
-def getwindowa():
-    windowa = pos.ask("DISPLAY,A,WINDOW;").split(',')
+def getwindowa(sel):
+    windowa = pos.ask("DISPLAY,"+sel+",WINDOW;").split(',')
     windowa = windowa[2].split(';')
     windowa = float(windowa[0])
     return windowa
@@ -69,8 +71,10 @@ def getposb():
     lineb = pos.ask("DISPLAY,B,POSITION;").split(',')
     positionb = lineb[2].split(';')
     positionb = float(positionb[0])
+    #pos.clear()
     return positionb
 def getvel():
+    #pos.clear()
     movement_str = pos.ask("DISPLAY,ACTIVE;").split(',')
     velocity = movement_str[2].split(';')
     velocity = abs(float(velocity[0]))
@@ -78,7 +82,8 @@ def getvel():
 def needinita():
     inita = 0
     positiona = getpos()
-    windowa = getwindowa()
+    windowa = getwindowa("A")
+    print "Worked!"
     if abs(positiona - float(start)) > windowa:
         inita=1
     return inita
@@ -87,14 +92,28 @@ def needinitb():
     positionb = getposb()
     windowb = getwindowb()
     if pol == 'V':
-        bstart = "090.00"
+        bstart = "270.00"
     else:
         bstart = "000.00"
     if abs(positionb - float(bstart)) > windowb:
         initb=1
     return initb
+def drawProgressBar(percent, barLen = 20):
+    sys.stdout.write("\r")
+    progress = ""
+    for i in range(barLen):
+        if i < int(barLen * percent):
+            progress += "="
+        else:
+            progress += " "
+    sys.stdout.write("[ %s ] %.2f%%" % (progress, percent * 100))
+    sys.stdout.flush()
+    
 #initialization of PNA
-print pna.ask("*IDN?")                            #get the PNA info for reference
+print "Intializing communication with network analyzer",
+pna.ask("*IDN?")                            #get the PNA info for reference
+print ". . . Complete"
+
 pna.write("SYST:FPReset")                         #factory preset
 pna.write("DISPlay:WINDow:STATE ON")              #turn on a window for disp
 #Setup S21 measurement aliased as MyMeas
@@ -106,95 +125,94 @@ pna.write("SENS1:FREQ:STOP "+fstop)
 pna.write("SENS1:SWE:POIN "+npts)
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
+        
 
 #initialization of positioner, bypass if sgh option used
 if option != 'sgh':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
-
     
     position = getpos()   
-    print getpos()
-#    if position < 5 or position > 355 :
-#        pos.write("MOVE,A,CWGO,010.00;")
-#        print "initializing position please wait"
-#        time.sleep(5)      
-                  #out of bounds value for angle, used to intialize while loop below
-    init=needinita()
-    if init:
+    #print position
+
+    if needinita():
         if position >= 180:         #go via shortest path to the start position
-            print "position greater than 180"
+            #print "position greater than 180"
             pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
             time.sleep(2)        
-            while getvel() == 0:
-                niente = 0
+            print "Moving to initial turntable position", 
             while getvel() != 0:
-                time.sleep(5)
-                print "Initializing turntable position"
+                time.sleep(2)
+                print ".",
+            print "Complete"
 
         else:
-            print "position less than 180"
+            #print "position less than 180"
             pos.write("MOVE,A,CCWCHECK,"+start+";") 
             time.sleep(2) 
-            while getvel() == 0:
-                niente = 0
-                print "Vel = 0"
+            print "Moving to intial turntable position", 
             while getvel() != 0:
-                time.sleep(5)
-                print "Initializing turntable position"
+                time.sleep(2)
+                print ".", 
+            print "Complete"
 
         
 #SET POLARIZATION ON SGH -- do regardless of sgh or real measurement?  issues w/ movement?
-print "Setting SGH polarization"
+print "Setting Rx SGH polarization to",
 break1 = 0
 niente = 0
 pos.write("SCALE,B,360;")
 pos.write("PRIMARY,B;")
 position = getposb()
 if pol == 'H':
-    print "H-pol"
+    print "horizontal",
     init=needinitb()
     if init:
         if position >= 0 or position <= 180:         #go via shortest path to the start position
             pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
             time.sleep(2) 
-            while getvel() == 0:
-                niente = 0
+            print("Initializing gainhorn position") 
             while getvel() != 0:
-                time.sleep(5)
-                print "Initializing gainhorn position"       
+                time.sleep(2)
+                print(".")  
+            print "Complete"
         else:
             pos.write("MOVE,B,CWCHECK,000.00")    
             time.sleep(2) 
-            while getvel() == 0:
-                niente = 0
+            print("Initializing gainhorn position")
             while getvel() != 0:
-                time.sleep(5)
-                print "Initializing gainhorn position"
+                time.sleep(2)
+                print(".")
+            print "Complete"
+    else:
+        print ". . Complete"
          
 if pol == 'V':
-    print "V-pol"
+    print "vertical",
     init = needinitb()
     if init:
         if position >= 90 or position <= 270:         #go via shortest path to the start position
-            pos.write("MOVE,B,CWCHECK,090.00;")    #<- add start pos. here
+            pos.write("MOVE,B,CWCHECK,270.00;")    #<- add start pos. here
             time.sleep(2)       
-            while getvel() == 0 and break1 != 1:
-                niente = 0;
+            print("Initializing gainhorn position") 
             while getvel() != 0:
-                time.sleep(5)
-                print "Initializing gainhorn position"     
+                time.sleep(2)
+                print(".")  
+            print "Complete"   
         else:
-            pos.write("MOVE,B,CCWCHECK,090.00") 
+            pos.write("MOVE,B,CCWCHECK,270.00") 
             time.sleep(2) 
-            while getvel() == 0:
-                niente = 0
+            print("Initializing gainhorn position") 
             while getvel() != 0:
-                time.sleep(5)
-                print "Initializing gainhorn position"
+                time.sleep(2)
+                print(".")  
+            print "Complete"
+    else:
+        print ". . Complete"
 
 pos.write("PRIMARY,A;")
+time.sleep(2)
 print "STARTING MEASUREMENT: SEE FIGURE 1"
 
 #PREPARE FOR ACQUISITION
@@ -225,9 +243,9 @@ xlabel('Rotation, deg')
 #MAIN ACQUISITION LOOP
 if option != 'sgh':  #if not in sgh mode, do full measurement
     pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
-    while getpos() == ANG[ind]:
-        dummy = 1                         #pause for positioner to start
-    while getpos() != ANG[ind]:             #motion check loop
+    time.sleep(2)
+                      #pause for positioner to start
+    while getvel() != 0:             #motion check loop
         while getpos() <= ANG[ind]+float(ares):        #between measurements loop
             if abs(getpos()-float(stop))<=1:             #escape procedure for end <- add stop here
                 stopflag = 1
@@ -247,13 +265,19 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         qpobj.set_ydata(QPy)
         qpobj.set_xdata(QPx)          # update the data on quickplot
         draw()                        # redraw the canvas
+        
+        
+        drawProgressBar(ANG[ind]/float(stop))
         pause(0.01)                   #locks up w/o pause
 
 else:   #if sgh mode, take a single measurement with no movement
+    print "Taking standard gain horn measurement"
     s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
+    
+drawProgressBar(1);print "\n"
 
 #CONVERT COLLECTED DATA INTO R+jI form
-print "Acquisition complete\n Converting output data"
+print "Converting output data"
 S21 = numpy.empty([len(s21),float(npts)],dtype = complex)
 for ind in range(len(s21)):
     line = s21[ind]

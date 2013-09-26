@@ -6,12 +6,12 @@ datasave = secondmeas
 option = measure
 
 #FREQUENCY
-fstart = 1e9
-fstop = 2e9
+fstart = 2.5e9
+fstop = 3.5e9
 npts = 201
 
 #POLARIZATION
-pol = V
+pol = H
 
 #ROTATION
 ares = 1
