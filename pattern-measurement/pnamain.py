@@ -192,18 +192,18 @@ if pol == 'H':
         if position >= 0 or position <= 180:         #go via shortest path to the start position
             pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
             time.sleep(2) 
-            print "Initializing gainhorn position", 
+            #print "Initializing gainhorn position", 
             while getvel() != 0:
-                time.sleep(2)
                 print ".",
+                time.sleep(2)
             print "Complete"
         else:
             pos.write("MOVE,B,CWCHECK,000.00")    
             time.sleep(2) 
-            print "Initializing gainhorn position",
+            #print "Initializing gainhorn position",
             while getvel() != 0:
-                time.sleep(2)
                 print ".",
+                time.sleep(2)
             print "Complete"
     else:
         print ". . Complete"
@@ -215,18 +215,18 @@ if pol == 'V':
         if position >= 90 or position <= 270:         #go via shortest path to the start position
             pos.write("MOVE,B,CCWCHECK,270.00;")    #<- add start pos. here
             time.sleep(2)       
-            print "Initializing gainhorn position", 
+            #print "Initializing gainhorn position", 
             while getvel() != 0:
-                time.sleep(2)
                 print ".",  
+                time.sleep(2)                
             print "Complete"   
         else:
             pos.write("MOVE,B,CWCHECK,270.00") 
             time.sleep(2) 
-            print"Initializing gainhorn position", 
+            #print"Initializing gainhorn position", 
             while getvel() != 0:
-                time.sleep(2)
                 print ".",  
+                time.sleep(2) 
             print "Complete"
     else:
         print ". . Complete"
@@ -234,7 +234,7 @@ if pol == 'V':
 
 pos.write("PRIMARY,A;")               #moving primary back to 'A' axis
 time.sleep(2)
-print "STARTING MEASUREMENT: SEE FIGURE 1"
+
 
 """
 Measurement Magic
@@ -254,6 +254,7 @@ pos.write("VELOCITY,A,003.00;")
 #MAIN ACQUISITION LOOP
 if option != 'sgh':  #if not in sgh mode, do full measurement
     pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
+    print "Running pattern measurement"
     time.sleep(2)
 
     #INITIALIZE QUICKPLOT FIGURE
