@@ -251,23 +251,23 @@ s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))   #why do we have to do 
 stopflag = 0
 pos.write("VELOCITY,A,003.00;")
 
-#INITIALIZE QUICKPLOT FIGURE
-ion()
-figure(figsize = (8,5))
-xlim([0,360])
-ylim([-100,0])
-qpobj, = plot(0,0)
-QPx = []
-QPy = []
-title('Uncalibrated Pattern Data')
-ylabel('Thru power, dB')
-xlabel('Rotation, deg')
-
-
 #MAIN ACQUISITION LOOP
 if option != 'sgh':  #if not in sgh mode, do full measurement
     pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
     time.sleep(2)
+
+    #INITIALIZE QUICKPLOT FIGURE
+    ion()
+    figure(figsize = (8,5))
+    xlim([0,360])
+    ylim([-100,0])
+    qpobj, = plot(0,0)
+    QPx = []
+    QPy = []
+    title('Uncalibrated Pattern Data')
+    ylabel('Thru power, dB')
+    xlabel('Rotation, deg')
+
                       #pause for positioner to start
     while getvel() != 0:             #motion check loop
         while getpos('A') <= ANG[ind]+float(ares):        #between measurements loop
