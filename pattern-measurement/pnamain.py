@@ -176,11 +176,10 @@ if option != 'sgh':
         
 #SET POLARIZATION ON SGH -- do regardless of sgh or real measurement?  issues w/ movement?
 print "Setting Rx SGH polarization to",
-break1 = 0
-niente = 0
-pos.write("SCALE,B,360;")
-pos.write("PRIMARY,B;")
+pos.write("PRIMARY,B;")                     #selecting 'B' axis to be primary
+pos.write("SCALE,B,360;")                   #changing the scale of the 'B' axis to 360
 position = getpos('B')
+
 if pol == 'H':
     print "horizontal",
     init=needinit('B')
@@ -227,7 +226,8 @@ if pol == 'V':
     else:
         print ". . Complete"
 
-pos.write("PRIMARY,A;")
+
+pos.write("PRIMARY,A;")               #moving primary back to 'A' axis
 time.sleep(2)
 print "STARTING MEASUREMENT: SEE FIGURE 1"
 
@@ -276,14 +276,14 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
         ANG.append(getpos('A'))
         
-                                            #take off one data point for quickplot
+                                        #take off one data point for quickplot
         line = s21[ind]
         qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[0]))))
         QPx.append(ANG[ind])
         QPy.append(qp)
         qpobj.set_ydata(QPy)
-        qpobj.set_xdata(QPx)          # update the data on quickplot
-        draw()                        # redraw the canvas
+        qpobj.set_xdata(QPx)            # update the data on quickplot
+        draw()                          # redraw the canvas
         
         
         drawProgressBar(ANG[ind]/float(stop))
