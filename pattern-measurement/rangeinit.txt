@@ -11,7 +11,7 @@ fstop = 3.5e9
 npts = 201
 
 #POLARIZATION
-pol = H
+pol = V
 
 #ROTATION
 ares = 1

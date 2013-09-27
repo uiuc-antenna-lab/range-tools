@@ -516,3 +516,31 @@ Because we messed up the first one!
 	Polarization: H
 Because we messed up the first one!
 
+2013-09-27 11:57:31
+	Datafile: secondmeas
+	Frequency: 2.5e9 - 3.5e9, 201 points
+	Rotation: 000.00-090.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-27 12:14:12
+	Datafile: secondmeas
+	Frequency: 2.5e9 - 3.5e9, 201 points
+	Rotation: 000.00-090.00 degrees, approx 1 degree resolution
+	Polarization: H
+Because we messed up the first one!
+
+2013-09-27 12:16:41
+	Datafile: secondmeas
+	Frequency: 2.5e9 - 3.5e9, 201 points
+	Rotation: 000.00-090.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+
+2013-09-27 12:24:20
+	Datafile: secondmeas
+	Frequency: 2.5e9 - 3.5e9, 201 points
+	Rotation: 000.00-090.00 degrees, approx 1 degree resolution
+	Polarization: V
+Because we messed up the first one!
+

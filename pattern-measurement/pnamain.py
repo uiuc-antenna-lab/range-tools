@@ -58,8 +58,8 @@ pos = instrument(POSref)
 
 #setting the window on the positioner
 pos.clear()
-pos.write("WINDOW,A,001.50;")
-pos.write("WINDOW,B,001.50;")
+pos.write("WINDOW,A,001.00;")
+pos.write("WINDOW,B,001.00;")
 
 
 
@@ -70,9 +70,9 @@ Function definitions
 
 #function to grab window parameter of axis(sel) -used in needinit()
 def getwindow(sel):
-    windowa = pos.ask("DISPLAY,"+sel+",WINDOW;").split(',')
-    windowa = windowa[2].split(';')
-    windowa = float(window[0])
+    window = pos.ask("DISPLAY,"+sel+",WINDOW;").split(',')
+    window = window[2].split(';')
+    window = float(window[0])
     return window
     
 #function to grab current turntable location from positioner
@@ -90,7 +90,7 @@ def getvel():
     return velocity 
 
 #function to determine whether or not a positioner element needs initialization
-def needinit():
+def needinit(sel):
     inita = 0
     initb = 0
     if sel == 'A':   # Element A (chamber table) 
@@ -154,6 +154,7 @@ if option != 'sgh':
     pos.write("PRIMARY,A;")     #setting A as the primary axis
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
     
+    position = getpos('A')
     if needinit('A'):
         if position >= 180:         #go via shortest path to the start position
             pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
@@ -178,6 +179,7 @@ if option != 'sgh':
 print "Setting Rx SGH polarization to",
 pos.write("PRIMARY,B;")                     #selecting 'B' axis to be primary
 pos.write("SCALE,B,360;")                   #changing the scale of the 'B' axis to 360
+pos.write("VELOCITY,B,007.50;")
 position = getpos('B')
 
 if pol == 'H':
@@ -187,18 +189,18 @@ if pol == 'H':
         if position >= 0 or position <= 180:         #go via shortest path to the start position
             pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
             time.sleep(2) 
-            print("Initializing gainhorn position") 
+            print "Initializing gainhorn position", 
             while getvel() != 0:
                 time.sleep(2)
-                print(".")  
+                print ".",
             print "Complete"
         else:
             pos.write("MOVE,B,CWCHECK,000.00")    
             time.sleep(2) 
-            print("Initializing gainhorn position")
+            print "Initializing gainhorn position",
             while getvel() != 0:
                 time.sleep(2)
-                print(".")
+                print ".",
             print "Complete"
     else:
         print ". . Complete"
@@ -208,20 +210,20 @@ if pol == 'V':
     init = needinit('B')
     if init:
         if position >= 90 or position <= 270:         #go via shortest path to the start position
-            pos.write("MOVE,B,CWCHECK,270.00;")    #<- add start pos. here
+            pos.write("MOVE,B,CCWCHECK,270.00;")    #<- add start pos. here
             time.sleep(2)       
-            print("Initializing gainhorn position") 
+            print "Initializing gainhorn position", 
             while getvel() != 0:
                 time.sleep(2)
-                print(".")  
+                print ".",  
             print "Complete"   
         else:
-            pos.write("MOVE,B,CCWCHECK,270.00") 
+            pos.write("MOVE,B,CWCHECK,270.00") 
             time.sleep(2) 
-            print("Initializing gainhorn position") 
+            print"Initializing gainhorn position", 
             while getvel() != 0:
                 time.sleep(2)
-                print(".")  
+                print ".",  
             print "Complete"
     else:
         print ". . Complete"
