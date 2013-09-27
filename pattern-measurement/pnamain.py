@@ -190,7 +190,7 @@ if pol == 'H':
     init=needinit('B')
     if init:
         if position >= 0 or position <= 180:         #go via shortest path to the start position
-            pos.write("MOVE,B,CCWCHECK,000.00;")    #<- add start pos. here
+            pos.write("MOVE,B,CWCHECK,000.00;")    #<- add start pos. here
             time.sleep(2) 
             #print "Initializing gainhorn position", 
             while getvel() != 0:
@@ -198,7 +198,7 @@ if pol == 'H':
                 time.sleep(2)
             print "Complete"
         else:
-            pos.write("MOVE,B,CWCHECK,000.00")    
+            pos.write("MOVE,B,CCWCHECK,000.00")    
             time.sleep(2) 
             #print "Initializing gainhorn position",
             while getvel() != 0:
