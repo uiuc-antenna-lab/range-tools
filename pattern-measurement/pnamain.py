@@ -14,6 +14,9 @@ from visa import *
 import warnings
 warnings.filterwarnings("ignore")
 
+
+
+print "pattern-measurement  v. 0.1"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
