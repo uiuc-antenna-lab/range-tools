@@ -145,6 +145,7 @@ pna.write("DISPlay:WINDow1:TRACe1:FEED 'MyMeas'")  #FEED MyMeas to Trace 1 for d
 pna.write("SENS1:FREQ:STAR "+fstart)
 pna.write("SENS1:FREQ:STOP "+fstop)
 pna.write("SENS1:SWE:POIN "+npts)
+pna.write("SENS1:SWE:TIME: 25ms")
 
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
