@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 
 
 print '\n'
-print "pattern-measurement  v. 0.2"
+print "pattern-measurement  v. 0.3"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
@@ -145,7 +145,7 @@ pna.write("DISPlay:WINDow1:TRACe1:FEED 'MyMeas'")  #FEED MyMeas to Trace 1 for d
 pna.write("SENS1:FREQ:STAR "+fstart)
 pna.write("SENS1:FREQ:STOP "+fstop)
 pna.write("SENS1:SWE:POIN "+npts)
-pna.write("SENS1:SWE:TIME: 25ms")
+pna.write("SENS1:SWE:TIME .05")
 
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
@@ -272,7 +272,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
                       #pause for positioner to start
     while getvel() != 0:             #motion check loop
         while getpos('A') <= ANG[ind]+float(ares):        #between measurements loop
-            if abs(getpos('A')-float(stop))<=1:             #escape procedure for end <- add stop here
+            if abs(getpos('A')-float(stop))<=1 or abs(getpos('A')-float(stop))>=359:             #escape procedure for end <- add stop here
                 stopflag = 1
                 break        
         ind =ind+1    
@@ -284,7 +284,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         
                                         #take off one data point for quickplot
         line = s21[ind]
-        qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[0]))))
+        qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[1]))))
         QPx.append(ANG[ind])
         QPy.append(qp)
         qpobj.set_ydata(QPy)
@@ -293,7 +293,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         
         
         drawProgressBar(ANG[ind]/float(stop))
-        pause(0.01)                   #locks up w/o pause
+        pause(0.001)                   #locks up w/o pause
 
 else:   #if sgh mode, take a single measurement with no movement
     print "Taking standard gain horn measurement"
