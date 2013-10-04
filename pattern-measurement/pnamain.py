@@ -15,8 +15,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-
-print "pattern-measurement  v. 0.1"
+print '\n'
+print "pattern-measurement  v. 0.2"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
@@ -48,6 +48,7 @@ fid.readline()
 comments = fid.read()
 fid.close()
 
+pol=pol.upper()
 """
 Setting up GPIB connection parameters
 """
@@ -63,9 +64,6 @@ pos = instrument(POSref)
 pos.clear()
 pos.write("WINDOW,A,001.00;")
 pos.write("WINDOW,B,001.00;")
-
-
-
 
 """
 Function definitions
@@ -156,6 +154,7 @@ if option != 'sgh':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")     #setting A as the primary axis
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
+    pos.write("VELOCITY,A,003.00;")
     
     position = getpos('A')
     if needinit('A'):
@@ -265,7 +264,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
     qpobj, = plot(0,0)
     QPx = []
     QPy = []
-    title('Uncalibrated Pattern Data')
+    title('Uncalibrated Pattern Data '+fstart+' Hz')
     ylabel('Thru power, dB')
     xlabel('Rotation, deg')
 
@@ -317,7 +316,8 @@ st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 fid.write(st+"\n")
 fid.write("\tDatafile: " + datafile+"\n")
 fid.write("\tFrequency: "+fstart+" - "+fstop+", "+npts+" points\n")
-fid.write("\tRotation: "+start+"-"+stop+" degrees, approx "+ares+" degree resolution\n")
+if option != 'sgh':
+    fid.write("\tRotation: "+start+"-"+stop+" degrees, approx "+ares+" degree resolution\n")
 fid.write('\tPolarization: ' + pol+"\n")
 fid.write(comments+'\n\n')
 fid.close()    
