@@ -1,9 +1,8 @@
 Analysis Tools Documentation 
 ****************************
 
-Created on October 7, 2013 by Brian Gibbons
-
-This directory contains (or will contain) a collection of tools for analyzing, fformatting, and visualizing antenna pattern measurments.
+This directory contains (or will contain) a collection of tools for analyzing, 
+formatting, and visualizing antenna pattern measurments.
 
 
 
@@ -14,6 +13,8 @@ plotPoincare.m
 *   Matlab script to plot orthogonal field measurments on a Poincare sphere to
 *   visualize polarization.
 
+findBeamwidth.m
+*	Matlab script to find the desired beamwidth of an antenna pattern.
 
 
 
@@ -41,6 +42,25 @@ plotPoincare.m
 *   text labels on the sphere denoting six special case polarizations:
 *   left- and right-handed circular; vertical, horizontal, and +/-45
 *   degree (slant) linear. If not specified, it defaults to true.
-*
-*   Written by Brian Gibbons
 
+
+findBeamwidth.m
+*	Matlab function
+*	[beamwidth, topIndex, botIndex] = findBeamwidth(beamwidthDepth_dB, data_dB)
+*
+*   beamwidth = Width of beam, in number of indicies between the two bounds
+*
+*   topIndex = Index into data_dB of location of right-hand (larger angle)
+*       bound of the beam
+*
+*   botIndex = Index into data_dB of location of left-hand (smaller angle)
+*       bound of the beam
+
+*   beamwidthDepth_dB = Decrease between pattern max and bounds of
+*       beam, e.g. set this to +3 for the half-power (-3dB) beamwidth if
+*       data_dB is a power pattern.
+*
+*   data_dB = Antenna pattern data in dB. Note that whether this is a power
+*       or field pattern will influence what value you want to use with
+*       beamwidthDepth_dB. Data points are assumed to be given in strictly 
+*       increasing or strictly decreasing order by angle.
