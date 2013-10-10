@@ -16,6 +16,8 @@ plotPoincare.m
 findBeamwidth.m
 *	Matlab script to find the desired beamwidth of an antenna pattern.
 
+test_findBeamwith.m
+*	Matlab script to test functionality of findBeamwithd.m
 
 
 
@@ -64,3 +66,14 @@ findBeamwidth.m
 *       or field pattern will influence what value you want to use with
 *       beamwidthDepth_dB. Data points are assumed to be given in strictly 
 *       increasing or strictly decreasing order by angle.
+
+
+test_findBeamwidth.m
+*	Matlab script
+*	
+*	Generates a sample pattern (sin(phi/2))^2 for phi in [0,359], adds noise,
+*	and plots the clean and noisy pattern in decibels. The beamwidth is
+*	calculated and drawn on the noisy data graph. This is then repeated for the
+*	same pattern rotated 120 degrees (with a fresh set of noise added to the
+*	clean data).
+
