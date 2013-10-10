@@ -15,8 +15,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-
-print "pattern-measurement  v. 0.1"
+print '\n'
+print "pattern-measurement  v. 0.3"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
@@ -48,6 +48,7 @@ fid.readline()
 comments = fid.read()
 fid.close()
 
+pol=pol.upper()
 """
 Setting up GPIB connection parameters
 """
@@ -63,9 +64,6 @@ pos = instrument(POSref)
 pos.clear()
 pos.write("WINDOW,A,001.00;")
 pos.write("WINDOW,B,001.00;")
-
-
-
 
 """
 Function definitions
@@ -147,6 +145,7 @@ pna.write("DISPlay:WINDow1:TRACe1:FEED 'MyMeas'")  #FEED MyMeas to Trace 1 for d
 pna.write("SENS1:FREQ:STAR "+fstart)
 pna.write("SENS1:FREQ:STOP "+fstop)
 pna.write("SENS1:SWE:POIN "+npts)
+pna.write("SENS1:SWE:TIME .05")
 
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
@@ -156,6 +155,7 @@ if option != 'sgh':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")     #setting A as the primary axis
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
+    pos.write("VELOCITY,A,003.00;")
     
     position = getpos('A')
     if needinit('A'):
@@ -265,14 +265,14 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
     qpobj, = plot(0,0)
     QPx = []
     QPy = []
-    title('Uncalibrated Pattern Data')
+    title('Uncalibrated Pattern Data '+fstart+' Hz')
     ylabel('Thru power, dB')
     xlabel('Rotation, deg')
 
                       #pause for positioner to start
     while getvel() != 0:             #motion check loop
         while getpos('A') <= ANG[ind]+float(ares):        #between measurements loop
-            if abs(getpos('A')-float(stop))<=1:             #escape procedure for end <- add stop here
+            if abs(getpos('A')-float(stop))<=1 or abs(getpos('A')-float(stop))>=359:             #escape procedure for end <- add stop here
                 stopflag = 1
                 break        
         ind =ind+1    
@@ -284,7 +284,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         
                                         #take off one data point for quickplot
         line = s21[ind]
-        qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[0]))))
+        qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[1]))))
         QPx.append(ANG[ind])
         QPy.append(qp)
         qpobj.set_ydata(QPy)
@@ -293,7 +293,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         
         
         drawProgressBar(ANG[ind]/float(stop))
-        pause(0.01)                   #locks up w/o pause
+        pause(0.001)                   #locks up w/o pause
 
 else:   #if sgh mode, take a single measurement with no movement
     print "Taking standard gain horn measurement"
@@ -317,7 +317,8 @@ st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 fid.write(st+"\n")
 fid.write("\tDatafile: " + datafile+"\n")
 fid.write("\tFrequency: "+fstart+" - "+fstop+", "+npts+" points\n")
-fid.write("\tRotation: "+start+"-"+stop+" degrees, approx "+ares+" degree resolution\n")
+if option != 'sgh':
+    fid.write("\tRotation: "+start+"-"+stop+" degrees, approx "+ares+" degree resolution\n")
 fid.write('\tPolarization: ' + pol+"\n")
 fid.write(comments+'\n\n')
 fid.close()    
