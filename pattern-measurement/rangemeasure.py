@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 
 
 print '\n'
-print "pattern-measurement  v. 0.3"
+print "pattern-measurement  v. 0.4"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
@@ -30,6 +30,9 @@ fid.readline()
 project = fid.readline().split()[2]
 datafile = fid.readline().split()[2]
 option = fid.readline().split()[2]
+fid.readline()
+fid.readline()
+power = fid.readline().split()[2]
 fid.readline()
 fid.readline()
 fstart = fid.readline().split()[2]
@@ -146,6 +149,10 @@ pna.write("SENS1:FREQ:STAR "+fstart)
 pna.write("SENS1:FREQ:STOP "+fstop)
 pna.write("SENS1:SWE:POIN "+npts)
 pna.write("SENS1:SWE:TIME .05")
+
+#Set power level
+if power != 'default':
+    pna.write("SOUR:POW2 "+power)
 
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
