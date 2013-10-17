@@ -9,17 +9,17 @@ option = measure
 power = default
 
 #FREQUENCY
-fstart = 1000
-fstop = 2000
+fstart = +1e9
+fstop = 2e+9
 npts = 201
 
 #POLARIZATION
 pol = V
 
 #ROTATION
-ares = 1
-start = 0
-stop = 180
+ares = 0.5
+start = +20
+stop = -180
 
 #COMMENTS
 comments

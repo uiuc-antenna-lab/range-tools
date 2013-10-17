@@ -2,22 +2,14 @@
 #
 # Written by Brian Gibbons
 #
+# Version 0.2 - October 17, 2013
+#	-Extends number support to include decimals, scientific notation, and signs
+#
 # Version 0.1 - October 16, 2013
 
 
-#global project, datafile
-
-#project = 'unset'
-#datafile = 'unset'
-#option = 'unset'
-#power = 'unset'
-#fstart = 'unset'
-#fstop = 'unset'
-#npts = 'unset'
-#pol = 'unset'
-#ares = 'unset'
-#start = 'unset'
-#stop = 'unset'
+import ply.lex as lex
+import ply.yacc as yacc
 
 # Tokens
 
@@ -25,17 +17,17 @@ literals = ['e','E']
 
 reserved = {
     'project' : 'PROJECT',
-	'datasave' : 'DATASAVE',
-	'option' : 'OPTION',
-	'power' : 'POWER',
-	'fstart' : 'FSTART',
-	'fstop' : 'FSTOP',
-	'npts' : 'NPTS',
-	'pol' : 'POL',
-	'ares' : 'ARES',
-	'start' : 'START',
-	'stop' : 'STOP',
-	'comments' : 'COMMENTS',
+    'datasave' : 'DATASAVE',
+    'option' : 'OPTION',
+    'power' : 'POWER',
+    'fstart' : 'FSTART',
+    'fstop' : 'FSTOP',
+    'npts' : 'NPTS',
+    'pol' : 'POL',
+    'ares' : 'ARES',
+    'start' : 'START',
+    'stop' : 'STOP',
+    'comments' : 'COMMENTS',
     'measure' : 'MEASURE',
     'sgh' : 'SGH',
     'default' : 'DEFAULT',
@@ -67,9 +59,21 @@ def t_USERCOMMENT(t):
     # Discard all characters between a '#' and the end of the line
     pass
 
+def t_DECIMAL(t):
+    r'[+-]?[0-9]*\.[0-9]+'
+    t.type = 'NUMBER'
+    t.value = float(t.value)
+    return t
+
+def t_SCINUM(t):
+    r'[+-]?[0-9]+[eE][+-]?[0-9]+'
+    t.type = 'NUMBER'
+    t.value = float(t.value)
+    return t
+
 def t_NUMBER(t):
 #    r'\d+'
-    r'[0-9]+'
+    r'[+-]?[0-9]+'
     try:
         t.value = int(t.value)
     except ValueError:
@@ -104,7 +108,6 @@ ftext = finput.read()   # Read in entire file into string
 finput.close()
 
 # Build the lexer
-import ply.lex as lex
 lexer = lex.lex()
 lexer.input(ftext)
 
@@ -250,7 +253,6 @@ def p_error(p):
 
 
 # Build the parser
-import ply.yacc as yacc
 parser = yacc.yacc()
 
 
