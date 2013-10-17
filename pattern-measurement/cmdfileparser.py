@@ -5,6 +5,20 @@
 # Version 0.1 - October 16, 2013
 
 
+#global project, datafile
+
+#project = 'unset'
+#datafile = 'unset'
+#option = 'unset'
+#power = 'unset'
+#fstart = 'unset'
+#fstop = 'unset'
+#npts = 'unset'
+#pol = 'unset'
+#ares = 'unset'
+#start = 'unset'
+#stop = 'unset'
+
 # Tokens
 
 literals = ['e','E']
@@ -107,7 +121,17 @@ while 1:    # Display all tokens
 def p_cmdfile(p):
     '''cmdfile : cmdfile param
                | param'''
-    pass
+    if (len(p) == 3):
+#        print("  cmdfile 1: ")
+#        print(type(p[1]))
+#        print(type(p[2]))
+        p[1].update(p[2])
+        p[0] = p[1]
+        #p[0] = (p[1]).update(p[2])
+#        print(type(p[0]))
+#        print("end update")
+    else:
+        p[0] = p[1]
 
 def p_param(p):
     '''param : projfile
@@ -118,50 +142,53 @@ def p_param(p):
              | polset
              | angleset
              | commentset'''
-    pass
+    p[0] = p[1]
+#    print("param: '%s'" % p[1])
 
 def p_projfile(p):
     'projfile : PROJECT EQ ID'
-    project = p[3]
+    p[0] = {'project' : p[3]}
 
 def p_datasavefile(p):
     'datasavefile : DATASAVE EQ ID'
-    datafile = p[3]
+    p[0] = {'datafile' : p[3]}
 
 def p_optionset(p):
     '''optionset : OPTION EQ MEASURE
                  | OPTION EQ SGH'''
-    option = p[3]
+    p[0] = {'option' :  p[3]}
 
 def p_powerset(p):
     '''powerset : POWER EQ DEFAULT
                 | POWER EQ value'''
     if (p[3] != 'default'):
         print("Power changed from default to '%s'" % p[3])
-        power = p[3]
+        p[0] = {'power' : p[3]}
+    else:
+        p[0] = {}
 
 def p_freqset(p):
     ''' freqset : freqstart
                 | freqstop
                 | numpoints'''
-    pass
+    p[0] = p[1]
 
 def p_freqstart(p):
     'freqstart : FSTART EQ value'
-    fstart = p[3]
+    p[0] = {'fstart' : p[3]}
    
 def p_freqstop(p):
     'freqstop : FSTOP EQ value'
-    fstop = p[3]
+    p[0] = {'fstop' : p[3]}
 
 def p_numpoints(p):
     'numpoints : NPTS EQ value'
-    npts = p[3]
+    p[0] = {'npts' : p[3]}
 
 def p_polset(p):
     '''polset : POL EQ polh
               | POL EQ polv'''
-    pol = p[3]
+    p[0] = {'pol' : p[3]}
 
 def p_polh(p):
     '''polh : H1
@@ -185,23 +212,24 @@ def p_angleset(p):
     '''angleset : anglestart
                 | anglestop
                 | angleres'''
-    pass
+    p[0] = p[1]
 
 def p_anglestart(p):
     'anglestart : START EQ value'
-    start = p[3]
+    p[0] = {'start' : p[3]}
 
 def p_anglestop(p):
     'anglestop : STOP EQ value'
-    stop = p[3]
+    p[0] = {'stop' : p[3]}
 
 def p_angleres(p):
     'angleres : ARES EQ value'
-    ares = p[3]
+    p[0] = {'ares' : p[3]}
 
 def p_commentset(p):
     'commentset : COMMENTS' #EOFSTRING'
     #comments = p[2]
+    p[0] = {}
 
 
 def p_value(p):
@@ -225,34 +253,23 @@ def p_error(p):
 import ply.yacc as yacc
 parser = yacc.yacc()
 
-project = 'unset'
-datafile = 'unset'
-option = 'unset'
-power = 'unset'
-fstart = 'unset'
-fstop = 'unset'
-npts = 'unset'
-pol = 'unset'
-ares = 'unset'
-start = 'unset'
-stop = 'unset'
 
 result = parser.parse(ftext)
-print("project = " + project)
-print("datafile = " + datafile)
-print("option = " + option)
-print("power = " + power)
-print("fstart = " + fstart)
-print("fstop = " + fstop)
-print("npts = " + npts)
-print("pol = " + pol)
-print("ares = " + pol)
-print("start = " + start)
-print("stop = " + stop)
+#print("project = " + project)
+#print("datafile = " + datafile)
+#print("option = " + option)
+#print("power = " + power)
+#print("fstart = " + fstart)
+#print("fstop = " + fstop)
+#print("npts = " + npts)
+#print("pol = " + pol)
+#print("ares = " + pol)
+#print("start = " + start)
+#print("stop = " + stop)
 
 
-
-#print result
+print("\nParsed values:")
+print(result)
 
 
 #while True:
