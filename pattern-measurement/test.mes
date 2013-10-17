@@ -1,0 +1,27 @@
+### RANGE MEASUREMENT FILE ###`
+
+#FILENAMES
+project = testproj
+datasave = firstmeas
+option = measure
+
+#POWER LEVEL
+power = default
+
+#FREQUENCY
+fstart = 1000
+fstop = 2000
+npts = 201
+
+#POLARIZATION
+pol = V
+
+#ROTATION
+ares = 1
+start = 0
+stop = 180
+
+#COMMENTS
+comments
+#This is a test string. None
+#of this should pass through.
