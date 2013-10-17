@@ -9,8 +9,8 @@ option = measure
 power = default
 
 #FREQUENCY
-fstart = 1e9
-fstop = 2e9
+fstart = 1000
+fstop = 2000
 npts = 201
 
 #POLARIZATION
@@ -23,5 +23,5 @@ stop = 180
 
 #COMMENTS
 comments
-This is a test string. None
-of this should pass through.
+#This is a test string. None
+#of this should pass through.

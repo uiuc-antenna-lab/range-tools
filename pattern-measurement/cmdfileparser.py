@@ -7,7 +7,7 @@
 
 # Tokens
 
-literals = ['e']
+literals = ['e','E']
 
 reserved = {
     'project' : 'PROJECT',
@@ -25,14 +25,20 @@ reserved = {
     'measure' : 'MEASURE',
     'sgh' : 'SGH',
     'default' : 'DEFAULT',
-    'h' : 'HORIZ',
-    'H' : 'HORIZ',
-    'v' : 'VERT',
-    'V' : 'VERT',
+    'h' : 'H1',
+    'H' : 'H2', # I suspect there's a better way to do this...
+    'horiz' : 'H3',
+    'Horiz' : 'H4',
+    'HORIZ' : 'H5',
+    'v' : 'V1',
+    'V' : 'V2',
+    'vert' : 'V3',
+    'Vert' : 'V4',
+    'VERT' : 'V5',
 }
 # TODO: Add capability to use MHz, GHz, dBm, mW, etc.
 
-tokens = ['KEYWORD','NUMBER','VERT','HORIZ','EQ'] + list(reserved.values())
+tokens = ['ID','NUMBER','EQ'] + list(reserved.values())
 
 t_EQ = r'='
 #t_PLUS    = r'\+'
@@ -45,18 +51,7 @@ t_EQ = r'='
 def t_USERCOMMENT(t):
     r'\#.*\n'
     # Discard all characters between a '#' and the end of the line
-    print("User comment")
     pass
-
-def t_KEYWORD(t):
-    r'[a-zA-Z_][a-zA-Z0-9_]*'
-    # TODO: add support for filenames beginning with digits (enclose in quotes)
-    t.type = reserved.get(t.value,'ERROR')
-    if t.type == 'ERROR':
-        print("Unknown keyword '%s'" % t.value)
-        # TODO: stop here?
-    else :
-        return t
 
 def t_NUMBER(t):
 #    r'\d+'
@@ -67,6 +62,14 @@ def t_NUMBER(t):
         print("Integer value too large %d", t.value)
         t.value = 0
     return t
+
+def t_ID(t):
+    r'[a-zA-Z_][a-zA-Z0-9_]*'
+    # TODO: add support for filenames beginning with digits (enclose in quotes)
+    t.type = reserved.get(t.value,'ID') # Look for reserved keywords; if none found, default to ID
+    return t
+
+#def t_EOFSTRING(t): # End Of File String (which is a comment)
 
 # Ignored characters
 t_ignore = " \t"
@@ -81,24 +84,185 @@ def t_error(t):
 
 
 
-# Build the lexer
-import ply.lex as lex
-lex.lex()
-
 
 finput = open('test.mes','r')
 ftext = finput.read()   # Read in entire file into string
-lex.input(ftext)
-while 1:
-    tok = lex.token()
+finput.close()
+
+# Build the lexer
+import ply.lex as lex
+lexer = lex.lex()
+lexer.input(ftext)
+
+while 1:    # Display all tokens
+    tok = lexer.token()
     if not tok: break
     print tok
 
 
-# Parsing rules
+
+
+# Parsing rules (grammar)
+
+def p_cmdfile(p):
+    '''cmdfile : cmdfile param
+               | param'''
+    pass
+
+def p_param(p):
+    '''param : projfile
+             | datasavefile
+             | optionset
+             | powerset
+             | freqset
+             | polset
+             | angleset
+             | commentset'''
+    pass
+
+def p_projfile(p):
+    'projfile : PROJECT EQ ID'
+    project = p[3]
+
+def p_datasavefile(p):
+    'datasavefile : DATASAVE EQ ID'
+    datafile = p[3]
+
+def p_optionset(p):
+    '''optionset : OPTION EQ MEASURE
+                 | OPTION EQ SGH'''
+    option = p[3]
+
+def p_powerset(p):
+    '''powerset : POWER EQ DEFAULT
+                | POWER EQ value'''
+    if (p[3] != 'default'):
+        print("Power changed from default to '%s'" % p[3])
+        power = p[3]
+
+def p_freqset(p):
+    ''' freqset : freqstart
+                | freqstop
+                | numpoints'''
+    pass
+
+def p_freqstart(p):
+    'freqstart : FSTART EQ value'
+    fstart = p[3]
+   
+def p_freqstop(p):
+    'freqstop : FSTOP EQ value'
+    fstop = p[3]
+
+def p_numpoints(p):
+    'numpoints : NPTS EQ value'
+    npts = p[3]
+
+def p_polset(p):
+    '''polset : POL EQ polh
+              | POL EQ polv'''
+    pol = p[3]
+
+def p_polh(p):
+    '''polh : H1
+            | H2
+            | H3
+            | H4
+            | H5'''
+    p[0] = 'H'
+
+
+def p_polv(p):
+    '''polv : V1
+            | V2
+            | V3
+            | V4
+            | V5'''
+    p[0] = 'V'
+
+
+def p_angleset(p):
+    '''angleset : anglestart
+                | anglestop
+                | angleres'''
+    pass
+
+def p_anglestart(p):
+    'anglestart : START EQ value'
+    start = p[3]
+
+def p_anglestop(p):
+    'anglestop : STOP EQ value'
+    stop = p[3]
+
+def p_angleres(p):
+    'angleres : ARES EQ value'
+    ares = p[3]
+
+def p_commentset(p):
+    'commentset : COMMENTS' #EOFSTRING'
+    #comments = p[2]
+
+
+def p_value(p):
+    '''value : value 'e' NUMBER
+             | value 'E' NUMBER
+             | NUMBER '''
+    # TODO: add MHz etc. here
+    if (len(p) == 4):
+        p[0] = p[1] * (10**p[3])
+    else:
+        p[0] = p[1]
+    
+
+# Error rule for syntax errors
+def p_error(p):
+    print "Syntax error in input!"
 
 
 
+# Build the parser
+import ply.yacc as yacc
+parser = yacc.yacc()
+
+project = 'unset'
+datafile = 'unset'
+option = 'unset'
+power = 'unset'
+fstart = 'unset'
+fstop = 'unset'
+npts = 'unset'
+pol = 'unset'
+ares = 'unset'
+start = 'unset'
+stop = 'unset'
+
+result = parser.parse(ftext)
+print("project = " + project)
+print("datafile = " + datafile)
+print("option = " + option)
+print("power = " + power)
+print("fstart = " + fstart)
+print("fstop = " + fstop)
+print("npts = " + npts)
+print("pol = " + pol)
+print("ares = " + pol)
+print("start = " + start)
+print("stop = " + stop)
+
+
+
+#print result
+
+
+#while True:
+#    try:
+#        s = raw_input('calc > ')
+#    except EOFError:
+#        break
+#    if not s: continue
+#    result = parser.parse(s)
+#    print result
 
 
 #precedence = (
