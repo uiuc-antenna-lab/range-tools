@@ -2,6 +2,12 @@
 #
 # Written by Brian Gibbons
 
+# Version 0.5 - October 17, 2013
+#   -Changes syntax error message to report line number of error
+#   -Adds support for 'MHz' and 'GHz' in frequency settings
+#   -Removes unused code
+#   -Adds some comments and documentation
+
 # Version 0.4 - October 17, 2013
 #   -Adds support for scientific notation with decimal significands
 #   -Removes unused grammar rule (and 'e' literals) for scientific notation
@@ -20,11 +26,13 @@
 import ply.lex as lex
 import ply.yacc as yacc
 
-# Tokens
 
-#literals = ['e','E']
 
-reserved = {
+############
+#  Tokens  #
+############
+
+reserved = {    # Dict of reserved keywords and their token (on right)
     'project' : 'PROJECT',
     'datasave' : 'DATASAVE',
     'option' : 'OPTION',
@@ -55,23 +63,26 @@ reserved = {
     'vert' : 'VERT3',
     'Vert' : 'VERT4',
     'VERT' : 'VERT5',
+    'mhz' : 'MHZ1',
+    'Mhz' : 'MHZ2',
+    'MHz' : 'MHZ3',
+    'MHZ' : 'MHZ4',
+    'ghz' : 'GHZ1',
+    'Ghz' : 'GHZ2',
+    'GHz' : 'GHZ3',
+    'GHZ' : 'GHZ4',
 }
-# TODO: Add capability to use MHz, GHz, dBm, mW, etc.
+# TODO: Add capability to use dBm, mW, etc.
 
+# Tokens given in the list 'tokens' are defined in functions below
 tokens = ['ID','NUMBER','EQ','COMMENTS'] + list(reserved.values())
 
-t_EQ = r'='
-#t_PLUS    = r'\+'
-#t_MINUS   = r'-'
-#t_TIMES   = r'\*'
-#t_DIVIDE  = r'/'
-#t_NAME    = r'[a-zA-Z_][a-zA-Z0-9_]*'
-
+t_EQ = r'=' # Simple token with regex for the equals sign
 
 def t_USERCOMMENT(t):
     r'\#.*\n'
     # Discard all characters between a '#' and the end of the line
-    pass
+    t.lexer.lineno += 1
 
 def t_SCINUMDECIMAL(t):
     r'[+-]?[0-9]*\.[0-9]+[eE][+-]?[0-9]+'
@@ -116,7 +127,7 @@ def t_ID(t):
     return t
 
 # Ignored characters
-t_ignore = " \t"
+t_ignore = " \t"    # Ignore spaces and tabs (these will be stripped out)
 
 def t_newline(t):
     r'\n+'
@@ -128,41 +139,43 @@ def t_error(t):
 
 
 
-
+# Get input to parse
 finput = open('test.mes','r')
-ftext = finput.read()   # Read in entire file into string
+ftext = finput.read()   # Read in entire file to string
 finput.close()
 
-# Build the lexer
-lexer = lex.lex()
-lexer.input(ftext)
 
-print("\nDisplaying parsed tokens:")
-print("*************************")
-while 1:    # Display all tokens
-    tok = lexer.token()
-    if not tok: break
-    print tok
+lexer = lex.lex()   # Build the lexer
+#lexer.input(ftext)  # Feed the input string to the lexer (to be tokenized)
+#print("\nDisplaying parsed tokens:")
+#print("*************************")
+#while 1:    # Display all tokens
+#    tok = lexer.token()
+#    if not tok: break
+#    print tok
+## Note that printing tokens messes up line number counting (only needed for
+## reporting location of syntax errors).
 
 
 
 
-# Parsing rules (grammar)
-
-def p_cmdfile(p):
+#############################
+#  Parsing rules (grammar)  #
+#############################
+def p_cmdfile(p):   # Starting grammar symbol
     '''cmdfile : cmdfile param
                | param'''
     if (len(p) == 3):
-#        print("  cmdfile 1: ")
-#        print(type(p[1]))
-#        print(type(p[2]))
         p[1].update(p[2])
         p[0] = p[1]
-        #p[0] = (p[1]).update(p[2])
-#        print(type(p[0]))
-#        print("end update")
     else:
         p[0] = p[1]
+# From the PLY documentation:
+# The first rule defined in the yacc specification determines the starting
+# grammar symbol [here, a rule for cmdfile appears first]. Whenever the
+# starting rule is reduced by the parser and no more input is available,
+# parsing stops and the final value is returned (this value will be whatever
+# the top-most rule placed in p[0]). 
 
 def p_param(p):
     '''param : projfile
@@ -205,10 +218,10 @@ def p_powerset(p):
     '''powerset : POWER EQ default
                 | POWER EQ value'''
     if (p[3] != 'default'):
-        print("Power changed from default to '%s'" % p[3])
+        #print("Power changed from default to '%s'" % p[3])
         p[0] = {'power' : p[3]}
     else:
-        print("Power set by user to default")
+        #print("Power set by user to default")
         p[0] = {}
 
 def p_default(p):
@@ -224,12 +237,35 @@ def p_freqset(p):
     p[0] = p[1]
 
 def p_freqstart(p):
-    'freqstart : FSTART EQ value'
-    p[0] = {'fstart' : p[3]}
+    '''freqstart : FSTART EQ value
+                 | FSTART EQ value mhz
+                 | FSTART EQ value ghz'''
+    if (len(p) == 4): # First rule
+        p[0] = {'fstart' : p[3]}
+    else: # Second or third rules
+        p[0] = {'fstart' : p[3] * (10**p[4])}
    
 def p_freqstop(p):
     'freqstop : FSTOP EQ value'
     p[0] = {'fstop' : p[3]}
+
+# NOTE: the non-terminals mhz and ghz could be worked into value, in which case
+#       they'd simply be synonymous with *(10**6) and *(10**9), respectively.
+#       I've chosen to instead only add them to the grammar for the frequency
+#       set commands since this is the only proper place they should be used.
+def p_mhz(p):
+    '''mhz : MHZ1
+           | MHZ2
+           | MHZ3
+           | MHZ4'''
+    p[0] = 6    # Value will be used as the exponent
+
+def p_ghz(p):
+    '''ghz : GHZ1
+           | GHZ2
+           | GHZ3
+           | GHZ4'''
+    p[0] = 9    # Value will be used as the exponent
 
 def p_numpoints(p):
     'numpoints : NPTS EQ value'
@@ -282,98 +318,29 @@ def p_commentset(p):
 
 
 def p_value(p):
-#    '''value : value 'e' NUMBER
-#             | value 'E' NUMBER
-#             | NUMBER '''
     'value : NUMBER'
-    # TODO: add MHz etc. here
-#    if (len(p) == 4):
-#        p[0] = p[1] * (10**p[3])
-#    else:
     p[0] = p[1]
     
+# From PLY documentation:
+# Compute column
+#     input is the input text string
+#     token is a token instance
+def find_column(input,token):
+    last_cr = input.rfind('\n',0,token.lexpos)
+    if last_cr < 0:
+	last_cr = 0
+    column = (token.lexpos - last_cr) + 1
+    return column
 
 # Error rule for syntax errors
 def p_error(p):
-    print "Syntax error in input!"
+    print("\nERROR: Syntax error in input [%s]" % p)
+    print("     Line "+str(p.lexer.lineno)+", position "+str(find_column(ftext,p)))
 
 
 
-# Build the parser
-parser = yacc.yacc()
-
-result = parser.parse(ftext)
+parser = yacc.yacc()    # Build the parser
+result = parser.parse(ftext)    # Feed the text input to the parser
 
 print("\nParsed values dict:")
 print(result)
-
-
-#while True:
-#    try:
-#        s = raw_input('calc > ')
-#    except EOFError:
-#        break
-#    if not s: continue
-#    result = parser.parse(s)
-#    print result
-
-
-#precedence = (
-#    ('left','PLUS','MINUS'),
-#    ('left','TIMES','DIVIDE'),
-#    ('right','UMINUS'),
-#    )
-#
-## dictionary of names
-#names = { }
-#
-#def p_statement_assign(t):
-#    'statement : NAME EQUALS expression'
-#    names[t[1]] = t[3]
-#
-#def p_statement_expr(t):
-#    'statement : expression'
-#    print(t[1])
-#
-#def p_expression_binop(t):
-#    '''expression : expression PLUS expression
-#                  | expression MINUS expression
-#                  | expression TIMES expression
-#                  | expression DIVIDE expression'''
-#    if t[2] == '+'  : t[0] = t[1] + t[3]
-#    elif t[2] == '-': t[0] = t[1] - t[3]
-#    elif t[2] == '*': t[0] = t[1] * t[3]
-#    elif t[2] == '/': t[0] = t[1] / t[3]
-#
-#def p_expression_uminus(t):
-#    'expression : MINUS expression %prec UMINUS'
-#    t[0] = -t[2]
-#
-#def p_expression_group(t):
-#    'expression : LPAREN expression RPAREN'
-#    t[0] = t[2]
-#
-#def p_expression_number(t):
-#    'expression : NUMBER'
-#    t[0] = t[1]
-#
-#def p_expression_name(t):
-#    'expression : NAME'
-#    try:
-#        t[0] = names[t[1]]
-#    except LookupError:
-#        print("Undefined name '%s'" % t[1])
-#        t[0] = 0
-#
-#def p_error(t):
-#    print("Syntax error at '%s'" % t.value)
-#
-#import ply.yacc as yacc
-#yacc.yacc()
-#
-#while 1:
-#    try:
-#        s = input('calc > ')   # Use raw_input on Python 2
-#    except EOFError:
-#        break
-#    yacc.parse(s)

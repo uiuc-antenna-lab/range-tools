@@ -9,15 +9,22 @@ option = measure
 power = default
 
 #FREQUENCY
-fstart = +1e9
+fstart = 245 MHz
+fstart = 0.9ghz
 fstop = 2e+9
 npts = 201
 
 #POLARIZATION
 pol = V
+pol = v
+pol=vert
+pol = Vert
+pol= H
 
 #ROTATION
-ares = 0.5
+ares = +0.5
+ares = .1
+ares = -1e-1
 start = +20
 stop = -180
 
