@@ -1,13 +1,19 @@
 # Simple parser for command files
 #
 # Written by Brian Gibbons
-#
+
+# Version 0.4 - October 17, 2013
+#   -Adds support for scientific notation with decimal significands
+#   -Removes unused grammar rule (and 'e' literals) for scientific notation
+#   -Adds a few capitalization variants of some keywords
+#   -Renames a few keywork tokens to be more descriptive 
+
 # Version 0.3 - October 17, 2013
 #	-Adds support for comment section at end of file
-#
+
 # Version 0.2 - October 17, 2013
 #	-Extends number support to include decimals, scientific notation, and signs
-#
+
 # Version 0.1 - October 16, 2013
 
 
@@ -16,7 +22,7 @@ import ply.yacc as yacc
 
 # Tokens
 
-literals = ['e','E']
+#literals = ['e','E']
 
 reserved = {
     'project' : 'PROJECT',
@@ -30,19 +36,25 @@ reserved = {
     'ares' : 'ARES',
     'start' : 'START',
     'stop' : 'STOP',
-    'measure' : 'MEASURE',
-    'sgh' : 'SGH',
-    'default' : 'DEFAULT',
-    'h' : 'H1',
-    'H' : 'H2', # I suspect there's a better way to do this...
-    'horiz' : 'H3',
-    'Horiz' : 'H4',
-    'HORIZ' : 'H5',
-    'v' : 'V1',
-    'V' : 'V2',
-    'vert' : 'V3',
-    'Vert' : 'V4',
-    'VERT' : 'V5',
+    'measure' : 'MEAS1',
+    'Measure' : 'MEAS2',
+    'MEASURE' : 'MEAS3',
+    'sgh' : 'SGH1',
+    'Sgh' : 'SGH2',
+    'SGH' : 'SGH3',
+    'default' : 'DEFAULT1',
+    'Default' : 'DEFAULT2',
+    'DEFAULT' : 'DEFAULT3',
+    'h' : 'HORIZ1',
+    'H' : 'HORIZ2', # I suspect there's a better way to do this...
+    'horiz' : 'HORIZ3',
+    'Horiz' : 'HORIZ4',
+    'HORIZ' : 'HORIZ5',
+    'v' : 'VERT1',
+    'V' : 'VERT2',
+    'vert' : 'VERT3',
+    'Vert' : 'VERT4',
+    'VERT' : 'VERT5',
 }
 # TODO: Add capability to use MHz, GHz, dBm, mW, etc.
 
@@ -61,13 +73,19 @@ def t_USERCOMMENT(t):
     # Discard all characters between a '#' and the end of the line
     pass
 
+def t_SCINUMDECIMAL(t):
+    r'[+-]?[0-9]*\.[0-9]+[eE][+-]?[0-9]+'
+    t.type = 'NUMBER'
+    t.value = float(t.value)
+    return t
+
 def t_DECIMAL(t):
     r'[+-]?[0-9]*\.[0-9]+'
     t.type = 'NUMBER'
     t.value = float(t.value)
     return t
 
-def t_SCINUM(t):
+def t_SCINUMINT(t):
     r'[+-]?[0-9]+[eE][+-]?[0-9]+'
     t.type = 'NUMBER'
     t.value = float(t.value)
@@ -167,18 +185,37 @@ def p_datasavefile(p):
     p[0] = {'datafile' : p[3]}
 
 def p_optionset(p):
-    '''optionset : OPTION EQ MEASURE
-                 | OPTION EQ SGH'''
+    '''optionset : OPTION EQ measure
+                 | OPTION EQ sgh'''
     p[0] = {'option' :  p[3]}
 
+def p_measure(p):
+    '''measure : MEAS1
+               | MEAS2
+               | MEAS3'''
+    p[0] = 'measure'
+
+def p_sgh(p):
+    '''sgh : SGH1
+           | SGH2
+           | SGH3'''
+    p[0] = 'sgh'
+
 def p_powerset(p):
-    '''powerset : POWER EQ DEFAULT
+    '''powerset : POWER EQ default
                 | POWER EQ value'''
     if (p[3] != 'default'):
         print("Power changed from default to '%s'" % p[3])
         p[0] = {'power' : p[3]}
     else:
+        print("Power set by user to default")
         p[0] = {}
+
+def p_default(p):
+    '''default : DEFAULT1
+               | DEFAULT2
+               | DEFAULT3'''
+    p[0] = 'default'
 
 def p_freqset(p):
     ''' freqset : freqstart
@@ -204,20 +241,20 @@ def p_polset(p):
     p[0] = {'pol' : p[3]}
 
 def p_polh(p):
-    '''polh : H1
-            | H2
-            | H3
-            | H4
-            | H5'''
+    '''polh : HORIZ1
+            | HORIZ2
+            | HORIZ3
+            | HORIZ4
+            | HORIZ5'''
     p[0] = 'H'
 
 
 def p_polv(p):
-    '''polv : V1
-            | V2
-            | V3
-            | V4
-            | V5'''
+    '''polv : VERT1
+            | VERT2
+            | VERT3
+            | VERT4
+            | VERT5'''
     p[0] = 'V'
 
 
@@ -245,14 +282,15 @@ def p_commentset(p):
 
 
 def p_value(p):
-    '''value : value 'e' NUMBER
-             | value 'E' NUMBER
-             | NUMBER '''
+#    '''value : value 'e' NUMBER
+#             | value 'E' NUMBER
+#             | NUMBER '''
+    'value : NUMBER'
     # TODO: add MHz etc. here
-    if (len(p) == 4):
-        p[0] = p[1] * (10**p[3])
-    else:
-        p[0] = p[1]
+#    if (len(p) == 4):
+#        p[0] = p[1] * (10**p[3])
+#    else:
+    p[0] = p[1]
     
 
 # Error rule for syntax errors
