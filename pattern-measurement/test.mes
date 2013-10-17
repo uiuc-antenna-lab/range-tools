@@ -22,6 +22,6 @@ start = +20
 stop = -180
 
 #COMMENTS
-comments
-#This is a test string. None
-#of this should pass through.
+Comments
+This is a test comment. All of this should be passed through
+the token COMMENTS's value. 1234567890

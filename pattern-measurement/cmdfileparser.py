@@ -2,6 +2,9 @@
 #
 # Written by Brian Gibbons
 #
+# Version 0.3 - October 17, 2013
+#	-Adds support for comment section at end of file
+#
 # Version 0.2 - October 17, 2013
 #	-Extends number support to include decimals, scientific notation, and signs
 #
@@ -27,7 +30,6 @@ reserved = {
     'ares' : 'ARES',
     'start' : 'START',
     'stop' : 'STOP',
-    'comments' : 'COMMENTS',
     'measure' : 'MEASURE',
     'sgh' : 'SGH',
     'default' : 'DEFAULT',
@@ -44,7 +46,7 @@ reserved = {
 }
 # TODO: Add capability to use MHz, GHz, dBm, mW, etc.
 
-tokens = ['ID','NUMBER','EQ'] + list(reserved.values())
+tokens = ['ID','NUMBER','EQ','COMMENTS'] + list(reserved.values())
 
 t_EQ = r'='
 #t_PLUS    = r'\+'
@@ -81,13 +83,19 @@ def t_NUMBER(t):
         t.value = 0
     return t
 
+def t_COMMENTS(t): # Comment section at end of command file
+    r'[Cc]omments'
+    # Set token value to be comment string
+    t.value = t.lexer.lexdata[t.lexer.lexpos : len(t.lexer.lexdata)-1]
+    # Set position to end of input so it doesn't parse the comment section
+    t.lexer.lexpos = len(t.lexer.lexdata)
+    return t
+
 def t_ID(t):
     r'[a-zA-Z_][a-zA-Z0-9_]*'
     # TODO: add support for filenames beginning with digits (enclose in quotes)
     t.type = reserved.get(t.value,'ID') # Look for reserved keywords; if none found, default to ID
     return t
-
-#def t_EOFSTRING(t): # End Of File String (which is a comment)
 
 # Ignored characters
 t_ignore = " \t"
@@ -111,6 +119,8 @@ finput.close()
 lexer = lex.lex()
 lexer.input(ftext)
 
+print("\nDisplaying parsed tokens:")
+print("*************************")
 while 1:    # Display all tokens
     tok = lexer.token()
     if not tok: break
@@ -230,9 +240,8 @@ def p_angleres(p):
     p[0] = {'ares' : p[3]}
 
 def p_commentset(p):
-    'commentset : COMMENTS' #EOFSTRING'
-    #comments = p[2]
-    p[0] = {}
+    'commentset : COMMENTS'
+    p[0] = {'comments' : p[1]}
 
 
 def p_value(p):
@@ -255,22 +264,9 @@ def p_error(p):
 # Build the parser
 parser = yacc.yacc()
 
-
 result = parser.parse(ftext)
-#print("project = " + project)
-#print("datafile = " + datafile)
-#print("option = " + option)
-#print("power = " + power)
-#print("fstart = " + fstart)
-#print("fstop = " + fstop)
-#print("npts = " + npts)
-#print("pol = " + pol)
-#print("ares = " + pol)
-#print("start = " + start)
-#print("stop = " + stop)
 
-
-print("\nParsed values:")
+print("\nParsed values dict:")
 print(result)
 
 
