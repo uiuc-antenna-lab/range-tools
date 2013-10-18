@@ -3,14 +3,15 @@
 #FILENAMES
 project = testproj
 datasave = firstmeas
-option = measure
+option = measure # This is a comment
+# And so is this
 
 #POWER LEVEL
-power = default
+power = default 
 
 #FREQUENCY
 fstart = 245 MHz
-fstart = 0.9ghz
+fstart = 0.9ghz # When a parameter is specified multiple times, the last value set is used
 fstop = 2e+9
 npts = 201
 
@@ -23,12 +24,18 @@ pol= H
 
 #ROTATION
 ares = +0.5
-ares = .1
-ares = -1e-1
+ares = -.1
+ares = 1e-1
 start = +20
 stop = -180
 
 #COMMENTS
 Comments
-This is a test comment. All of this should be passed through
-the token COMMENTS's value. 1234567890
+This is a test comment. All of this should be passed through, even
+though it is on multiple lines.
+
+1
+2
+3
+
+4567890
