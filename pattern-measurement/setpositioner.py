@@ -15,28 +15,15 @@ import scipy.io as sio
 from visa import *
 import warnings
 warnings.filterwarnings("ignore")
+from positionerutils import *
 
 POSref = 'GPIB0::17'
 pos = instrument(POSref)
 
-#setting the window on the positioner
+#setting the appropriate parameters on the positioner
 pos.clear()
 pos.write("WINDOW,A,001.00;")
-pos.write("WINDOW,B,001.00;")
-
-#function to grab current turntable location from positioner
-def getpos(sel):
-    line = pos.ask("DISPLAY,"+sel+",POSITION;").split(',')
-    position = line[2].split(';')
-    position = float(position[0])
-    return position
-    
-def getvel():
-    movement_str = pos.ask("DISPLAY,ACTIVE;").split(',')
-    velocity = movement_str[2].split(';')
-    velocity = abs(float(velocity[0]))
-    return velocity 
-    
+pos.write("WINDOW,B,001.00;")    
 pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
 pos.write("PRIMARY,A;")     #setting A as the primary axis
 pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param

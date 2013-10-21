@@ -7,51 +7,60 @@ Updated on: Thu Sep 26 2013
 """
 #python initiailzation files
 import sys
-import numpy, pyvisa, time, datetime
-from pylab import *
-import scipy.io as sio
-from visa import *
-import warnings
-warnings.filterwarnings("ignore")
-
+#import numpy, pyvisa, time, datetime
+#from pylab import *
+#import scipy.io as sio
+#from visa import *
+#import warnings
+#warnings.filterwarnings("ignore")
+from cmdfileparser import CmdfileParser
 
 print '\n'
-print "pattern-measurement  v. 0.4"
+print "pattern-measurement  v. 0.5"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
 Reading in measurement file data
 """
-#LOAD IN TEST PARAMETERS FROM TEXT FILE
-fid = open(sys.argv[1],'r')
-fid.readline()
-fid.readline()
-fid.readline()
-project = fid.readline().split()[2]
-datafile = fid.readline().split()[2]
-option = fid.readline().split()[2]
-fid.readline()
-fid.readline()
-power = fid.readline().split()[2]
-fid.readline()
-fid.readline()
-fstart = fid.readline().split()[2]
-fstop = fid.readline().split()[2]
-npts = fid.readline().split()[2]
-fid.readline()
-fid.readline()
-pol = fid.readline().split()[2]
-fid.readline()
-fid.readline()
-ares = fid.readline().split()[2]
-start = fid.readline().split()[2]
-stop = fid.readline().split()[2]
-fid.readline()
-fid.readline()
-comments = fid.read()
-fid.close()
+# Initialize variables; use 'UNSET' for ones that MUST be set, and whatever
+# default value is desired for ones that MAY be set
+project = 'UNSET'
+datafile = 'UNSET'
+option = 'UNSET'
+power = 'default'
+fstart = 'UNSET'
+fstop = 'UNSET'
+npts = 'UNSET'
+pol = 'UNSET'
+ares = 'UNSET'
+start = 'UNSET'
+stop = 'UNSET'
+comments = ''
 
-pol=pol.upper()
+#LOAD IN TEST PARAMETERS FROM TEXT FILE
+parser = CmdfileParser()
+finput = open(sys.argv[1],'r')
+ftext = finput.read()   # Read in entire file to string
+finput.close()
+results = parser.parse(ftext)
+locals().update(results) # Use returned dictionary of parsed values to update the local variables
+
+print('\nParameters')
+print('@@@@@@@@@@')
+print('project = "%s"' % project)
+print('datafile = "%s"' % datafile)
+print('option = "%s"' % option)
+print('power = "%s"' % power)
+print('fstart = %f' % fstart)
+print('fstop = %f' % fstop)
+print('npts = %f' % npts)
+print('pol = "%s"' % pol)
+print('ares = %f' % ares)
+print('start = %f' % start)
+print('stop = %f' % stop)
+print('comments = "%s"' % comments)
+
+
 """
 Setting up GPIB connection parameters
 """
