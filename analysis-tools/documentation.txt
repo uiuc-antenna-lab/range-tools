@@ -8,6 +8,11 @@ visualizing antenna pattern measurments.
 Summary of Tools
 ****************
 
+AntennaQ.m
+%	Matlab function for computing bounds on antenna Q and D/Q, from Matlab
+%	Central File Exchange
+
+
 Dirplot.m
 %	Matlab function for polar directivity plots, from Matlab Central File
 %	Exchange
@@ -31,13 +36,62 @@ SphToRect.m
 %	Matlab function to convert from spherical to rectangular coordinates.
 
 
-test_findBeamwith.m
-%	Matlab script to test functionality of findBeamwithd.m
+test_findBeamwidth.m
+%	Matlab script to test functionality of findBeamwidth.m
 
 
 
 Detailed Listing
 ****************
+
+AntennaQ.m
+%	Matlab function
+%	AntennaQ computes physical bounds on Q and D/Q for linearly polarized antennas composed by non-magnetic materials.
+%
+%%% Examples: 
+%	  [DQ,Q,ka,polarizability] = AntennaQ(height, width, geometry, frequency, abs_eff, fig_num)
+%	  [DQ,Q,ka,polarizability] = AntennaQ(logspace(-2,2,301), 1, 'rectangle_v');
+%	  [DQ,Q,ka,polarizability] = AntennaQ(logspace(-2,2,301), 1, 'rectangle_v', 1e9, 0.5, 1);
+%	  [DQ,Q,ka,polarizability] = AntennaQ(1, 1, 'cylinder_v', 1e6);
+%	  [DQ,Q,ka,polarizability] = AntennaQ(0.05, 0.02, 'spheroid_h', 1e9, 0.5)
+%
+%%% Input parameters
+%	height, width : height and diameter for {cylinder_h, cylinder_v, spheroid_h, spheroid_v}
+%	                   height and width for rectangles. Unit meter [m]
+%	geometry: {'rec_v', 'rec_h', 'cyl_v', 'cyl_h', 'spheroid_h', 'spheroid_v', }   
+%	    _h for horizontal (along the width) and _v for vertical (along the height) polarization
+%	  'rec_v', 'rectangle_v' – planar rectangle, zero thickness;
+%	  'cyl_h’, ‘cylinder_h’ – cylinder;
+%	frequency: resonance frequency in Hz (scalar). Default frequency = c0/(2*pi), ie k=1.
+%	abs_eff: generalized (all spectrum) absorption efficiency (scalar). Default abs_eff=1/2.
+%	fig_num: if fig_no>0 plots the D/Q results in figure number fig_no.
+%
+%%% Output parameters
+%	DQ: bound on D/Q (directivity/Q factor) 
+%	Q: Q factor (or antenna Q, radiation Q) for the case D=3/2
+%	ka: electrical size, ka = 2*pi*frequency*a/c0, where a is the radius of the smallest circumscribing sphere, ie
+%	       a=sqrt(height^2+diameter^2)/2 for geo={'rec','cyl'} and a=max(height,diameter)/2 for the spheroids;  
+%	polarizability: polarizability of the structure in unit meter^3 [m^3]
+%
+%%%
+%	Copyright (C) Mats Gustafsson 2009
+%	http://www.eit.lth.se/staff/mats.gustafsson
+%%%
+%	This function calculates physical bounds on Q and D/Q for linearly
+%	polarized antennas composed by non-magnetic materials
+%	and circumscribed by various geometries as described in: 
+%	Gustafsson, Sohl, and Kristensson
+%	Illustrations of new physical bounds on linearly polarized antennas, 
+%	IEEE Trans. Antennas Propagat., Vol. 57, No. 5, pp. 1319-1327, 2009.
+%	http://dx.doi.org/10.1109/TAP.2009.2016683
+%	and
+%	Physical limitations on antennas of arbitrary shape, 
+%	Proc. Roy. Soc. A, Vol. 463, No. 2086, pp. 2589-2607, 2007. 
+%	http://dx.doi.org/10.1098/rspa.2007.1893
+%
+%	The polarizability is based on analytic results for spheroids and approximations of integral equation (MoM) data with rational
+%	functions for cylinders and rectangles.
+
 
 Dirplot.m
 %	Matlab function
