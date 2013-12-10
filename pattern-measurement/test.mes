@@ -7,7 +7,8 @@ option = measure # This is a comment
 # And so is this
 
 #POWER LEVEL
-power = default 
+power = -10
+power = default
 
 #FREQUENCY
 fstart = 245 MHz
@@ -29,10 +30,9 @@ ares = 1e-1
 start = +20
 stop = -180
 
-#COMMENTS
 Comments
-This is a test comment. All of this should be passed through, even
-though it is on multiple lines.
+This is a test comment (all the way to the end of the file). All of this should
+be passed through, even though it is on multiple lines.
 
 1
 2

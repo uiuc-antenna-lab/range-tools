@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Sep 06 14:30:23 2013
-Updated on: Thu Sep 26 2013
+Updated on: Tue Dec 10 2013
 @author: Kurt
 @author: Robert A. Scott
+@author: Brian Gibbons
 """
 #python initiailzation files
 import sys
-#import numpy, pyvisa, time, datetime
-#from pylab import *
-#import scipy.io as sio
-#from visa import *
-#import warnings
-#warnings.filterwarnings("ignore")
+import numpy, pyvisa, time, datetime
+from pylab import *
+import scipy.io as sio
+from visa import *
+import warnings
+warnings.filterwarnings("ignore")
 from cmdfileparser import CmdfileParser
 
 print '\n'
@@ -46,20 +47,47 @@ results = parser.parse(ftext)
 locals().update(results) # Use returned dictionary of parsed values to update the local variables
 
 print('\nParameters')
-print('@@@@@@@@@@')
-print('project = "%s"' % project)
-print('datafile = "%s"' % datafile)
-print('option = "%s"' % option)
-print('power = "%s"' % power)
-print('fstart = %f' % fstart)
-print('fstop = %f' % fstop)
-print('npts = %f' % npts)
-print('pol = "%s"' % pol)
-print('ares = %f' % ares)
-print('start = %f' % start)
-print('stop = %f' % stop)
-print('comments = "%s"' % comments)
+print('----------')
+print('project = "' + project + '"')
+print('datafile = "' + datafile + '"')
+print('option = "' + option + '"')
+print('power = ' + str(power))
+print('fstart = ' + str(fstart))
+print('fstop = ' + str(fstop))
+print('npts = ' + str(npts)) #print('npts = %f' % npts)
+print('pol = "' + pol + '"')
+print('ares = ' + str(ares))
+print('start = ' + str(start))
+print('stop = ' + str(stop))
+print('comments = "' + comments + '"')
 
+errorMsg = ""
+if project == 'UNSET':
+    errorMsg = errorMsg + '"project" variable unset.\n'
+if datafile == 'UNSET':
+    errorMsg = errorMsg + '"datafile" variable unset.\n'
+if option == 'UNSET':
+    errorMsg = errorMsg + '"option" variable unset.\n'
+if fstart == 'UNSET':
+    errorMsg = errorMsg + '"fstart" variable unset.\n'
+if fstop == 'UNSET':
+    errorMsg = errorMsg + '"fstop" variable unset.\n'
+if npts == 'UNSET':
+    errorMsg = errorMsg + '"npts" variable unset.\n'
+if pol == 'UNSET':
+    errorMsg = errorMsg + '"pol" variable unset.\n'
+if ares == 'UNSET':
+    errorMsg = errorMsg + '"ares" variable unset.\n'
+if start == 'UNSET':
+    errorMsg = errorMsg + '"start" variable unset.\n'
+if stop == 'UNSET':
+    errorMsg = errorMsg + '"stop" variable unset.\n'
+if comments == "":
+    print("Comments are not set. This is not recommended.\n")
+
+if errorMsg != "":
+#    print(errorMsg)
+    sys.exit(errorMsg)
 
 """
 Setting up GPIB connection parameters
