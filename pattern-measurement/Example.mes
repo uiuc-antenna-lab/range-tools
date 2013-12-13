@@ -2,8 +2,11 @@
 # Any time a '#' appears, everything after it until the end of the line is a comment and is ignored.
 
 #FILENAMES	<-- So this entire line is a comment, since it begins with #  -->
-project = testproj
-datasave = firstmeas
+# Filenames may optionally be enclosed in single (') or double (") quotes. Quotes are required if the filename includes spaces, the equals (=) sign, the pound (#) sign, or most special characters. Best to always just put it in quotes.
+project = "testproj"
+project = 'testproj'
+project = testproj      # No quotes; works in this case, but not recommended
+datasave = 'firstmeas'
 option = sgh
 option = Sgh
 option = SGH

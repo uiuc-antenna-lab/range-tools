@@ -7,6 +7,9 @@
 
 # Written by Brian Gibbons
 
+# Version 0.8 - December 13, 2013
+#   -Adds support for arbitrary filenames enclosed in single or double quotes
+
 # Version 0.7 - December 13, 2013
 #   -Adds accidentally omitted 'MHz' and 'GHz' support to fstop grammar
 #   -Removes printing of column (line position) on errors due to (new?) error finding the function find_column(...)
@@ -121,14 +124,22 @@ class CmdfileParser(Parser):
     # TODO: Add capability to use dBm, mW, etc.
     
     # Tokens given in the list 'tokens' are defined in functions below
-    tokens = ['ID','NUMBER','EQ','COMMENTS'] + list(reserved.values())
+    tokens = ['ID','NUMBER','EQ','COMMENTS','FILENAME'] + list(reserved.values())
     
-    t_EQ = r'=' # Simple token with regex for the equals sign
+    t_EQ = r'=' # Simple token with regex (regular expression) for the equals sign
+    
+    # If the raw strings (denoted by r'stuff') following the function definitions look somewhat cryptic, read up on "regular expressions". Furthermore, strings on the first line of a function declaration are normally "function documentation strings" in python, but here the ply module actually uses them.
     
     def t_USERCOMMENT(self, t):
         r'\#.*\n'
         # Discard all characters between a '#' and the end of the line
         t.lexer.lineno += 1
+    
+    def t_FILENAME(self, t):
+        r'".+?"|\'.+?\''  # Match any seq. of at least one character enclosed in single or double quotes. The sequence may not contain the type of the enclosing quotes. The modifier +? is a non-greedy version of +: that is, it matches one or more of the previous character (here the dot ., so any character except newline), but matching as few characters as possible.
+        t.type = 'ID'
+        t.value = t.value[1:-1] # Strip first and last (quote) characters
+        return t
     
     def t_SCINUMDECIMAL(self, t):
         r'[+-]?[0-9]*\.[0-9]+[eE][+-]?[0-9]+'
@@ -169,7 +180,6 @@ class CmdfileParser(Parser):
     
     def t_ID(self, t):
         r'[a-zA-Z_][a-zA-Z0-9_]*'
-        # TODO: add support for filenames beginning with digits (enclose in quotes)
         t.type = self.reserved.get(t.value,'ID') # Look for reserved keywords; if none found, default to ID
         return t
     
@@ -216,11 +226,13 @@ class CmdfileParser(Parser):
     #    print("param: '%s'" % p[1])
     
     def p_projfile(self, p):
-        'projfile : PROJECT EQ ID'
+        '''projfile : PROJECT EQ ID
+                    | PROJECT EQ FILENAME'''
         p[0] = {'project' : p[3]}
     
     def p_datasavefile(self, p):
-        'datasavefile : DATASAVE EQ ID'
+        '''datasavefile : DATASAVE EQ ID
+                        | DATASAVE EQ FILENAME'''
         p[0] = {'datafile' : p[3]}
     
     def p_optionset(self, p):
