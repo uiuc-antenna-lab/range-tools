@@ -7,6 +7,10 @@
 
 # Written by Brian Gibbons
 
+# Version 0.7 - December 13, 2013
+#   -Adds accidentally omitted 'MHz' and 'GHz' support to fstop grammar
+#   -Removes printing of column (line position) on errors due to (new?) error finding the function find_column(...)
+
 # Version 0.6 - October 18, 2013
 #   -Turns script into a function
 #   -power setting now explictly returned if set, even if just to 'default'
@@ -158,7 +162,7 @@ class CmdfileParser(Parser):
         r'[Cc]omments'
         # Set token value to be comment string
         t.value = t.lexer.lexdata[t.lexer.lexpos : len(t.lexer.lexdata)-1]
-        t.value = str.lstrip(t.value)   # Strip leading whitespace characters
+        t.value = str.strip(t.value)   # Strip leading and trailing whitespace characters
         # Set position to end of input so it doesn't parse the comment section
         t.lexer.lexpos = len(t.lexer.lexdata)
         return t
@@ -269,8 +273,13 @@ class CmdfileParser(Parser):
             p[0] = {'fstart' : p[3] * (10**p[4])}
        
     def p_freqstop(self, p):
-        'freqstop : FSTOP EQ value'
-        p[0] = {'fstop' : p[3]}
+        '''freqstop : FSTOP EQ value
+                    | FSTOP EQ value mhz
+                    | FSTOP EQ value ghz'''
+        if (len(p) == 4): # First rule
+            p[0] = {'fstop' : p[3]}
+        else: # Second or third rules
+            p[0] = {'fstop' : p[3] * (10**p[4])}
     
     # NOTE: the non-terminals mhz and ghz could be worked into value, in which case
     #       they'd simply be synonymous with *(10**6) and *(10**9), respectively.
@@ -348,15 +357,16 @@ class CmdfileParser(Parser):
     # Compute column
     #     input is the input text string
     #     token is a token instance
-    def find_column(self, input,token):
-        last_cr = input.rfind('\n',0,token.lexpos)
-        if last_cr < 0:
-            last_cr = 0
-        column = (token.lexpos - last_cr) + 1
-        return column
+#    def find_column(self, input,token):
+#        last_cr = input.rfind('\n',0,token.lexpos)
+#        if last_cr < 0:
+#            last_cr = 0
+#        column = (token.lexpos - last_cr) + 1
+#        return column
     
     # Error rule for syntax errors
     def p_error(self, p):
         print("\nERROR: Syntax error in input [%s]" % p)
-        print("     Line "+str(p.lexer.lineno)+", position "+str(find_column(ftext,p)))
+#        print("     Line "+str(p.lexer.lineno)+", position "+str(find_column(ftext,p)))
+        print("     Line "+str(p.lexer.lineno))
     
