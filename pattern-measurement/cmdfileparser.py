@@ -7,6 +7,9 @@
 
 # Written by Brian Gibbons
 
+# Version 0.9 - December 13, 2013
+#   -Adds support for specifying units of power (dBm, W, mW, uW, or nW)
+
 # Version 0.8 - December 13, 2013
 #   -Adds support for arbitrary filenames enclosed in single or double quotes
 
@@ -120,8 +123,21 @@ class CmdfileParser(Parser):
         'Ghz' : 'GHZ2',
         'GHz' : 'GHZ3',
         'GHZ' : 'GHZ4',
+        'dbm' : 'DBM1',
+        'dBm' : 'DBM2',
+        'DBM' : 'DBM3',
+        'w' : 'W1',
+        'W' : 'W2',
+        'mw' : 'MW1',
+        'mW' : 'MW2',
+        'MW' : 'MW3',
+        'uw' : 'UW1',
+        'uW' : 'UW2',
+        'UW' : 'UW3',
+        'nw' : 'NW1',
+        'nW' : 'NW2',
+        'NW' : 'NW3',
     }
-    # TODO: Add capability to use dBm, mW, etc.
     
     # Tokens given in the list 'tokens' are defined in functions below
     tokens = ['ID','NUMBER','EQ','COMMENTS','FILENAME'] + list(reserved.values())
@@ -254,14 +270,62 @@ class CmdfileParser(Parser):
     
     def p_powerset(self, p):
         '''powerset : POWER EQ default
-                    | POWER EQ value'''
-#        if (p[3] != 'default'):
-#            #print("Power changed from default to '%s'" % p[3])
-#            p[0] = {'power' : p[3]}
-#        else:
-#            #print("Power set by user to default")
-#            p[0] = {}
-        p[0] = {'power' : p[3]} # Return power, even if just 'default', since user explicitly set it
+                    | POWER EQ value
+                    | POWER EQ value dbm
+                    | POWER EQ value w
+                    | POWER EQ value mw
+                    | POWER EQ value uw
+                    | POWER EQ value nw'''
+        from math import log10
+        if len(p) == 4: # Default or unitless value
+            p[0] = {'power' : p[3]} # Return power, even if just 'default', since user explicitly set it
+        else:   # Units specified
+            if p[4] == 'dbm':
+                p[0] = {'power' : p[3]}
+            elif p[4] == 'w':
+                # Convert value in W to dBm
+                p[0] = {'power' : 10*log10(p[3]*1e+3)}
+            elif p[4] == 'mw':
+                # Convert value in mW to dBm
+                p[0] = {'power' : 10*log10(p[3])}
+            elif p[4] == 'uw':
+                # Convert value in uW to dBm
+                p[0] = {'power' : 10*log10(p[3]*1e-3)}
+            elif p[4] == 'nw':
+                # Convert value in nW to dBm
+                p[0] = {'power' : 10*log10(p[3]*1e-6)}
+            else: # How'd we get here?! Assume units of dBm
+                print("ERROR: Undefined case in grammar of powerset. Assuming units of dBm.")                
+                p[0] = {'power' : p[3]}
+    
+    def p_dbm(self, p):
+        '''dbm : DBM1
+               | DBM2
+               | DBM3'''
+        p[0] = 'dbm'
+    
+    def p_w(self, p):
+        ''' w : W1
+              | W2'''
+        p[0] = 'w'
+    
+    def p_mw(self, p):
+        '''mw : MW1
+              | MW2
+              | MW3'''
+        p[0] = 'mw'
+    
+    def p_uw(self, p):
+        '''uw : UW1
+              | UW2
+              | UW3'''
+        p[0] = 'uw'
+    
+    def p_nw(self, p):
+        '''nw : NW1
+              | NW2
+              | NW3'''
+        p[0] = 'nw'
     
     def p_default(self, p):
         '''default : DEFAULT1

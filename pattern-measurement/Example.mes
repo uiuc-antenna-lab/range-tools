@@ -18,7 +18,7 @@ option = MEASURE
 
 #POWER LEVEL	Comments like this are recommended for readability, but are not required
 # The following (with -10) are all synonymous (spaces and newlines are stripped out). 
-power = -10	# Recommended spacing, for readability
+power = -10
 power= -10
 power =-10
 power	=	-10
@@ -29,7 +29,21 @@ power
 power
 =
 -10
-power = default # When a parameter is specified multiple times, the last value set is used, thus this .mes file requests a power set to the 'default' level.
+power = -10.0
+power = -10dBm
+power = -10 dBm # Recommended form (for dBm input)
+power = -10 dbm
+power = -10 DBM
+power = 1e-4 W  # Recommended form (for W input)
+power = 1e-4 w
+power = 1e-4 W
+power = 0.1 mW  # Recommended form (for mW input)
+power = 0.1 mw
+power = 0.1 MW
+power = 100 nW  # Recommended form (for nW input)
+power = 100 nw
+power = 100 NW
+power = default # When a parameter is specified multiple times, the last value set is used, thus this .mes file requests a power set to the 'default' level. Note that if the power setting is omitted in a .mes file, power is set to default and no error is thrown.
 
 # The following all request the same frequencies. This is just to demonstrate the various options for inputing frequency numbers
 #FREQUENCY
