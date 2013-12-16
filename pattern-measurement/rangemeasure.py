@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 from cmdfileparser import CmdfileParser
 
 print '\n'
-print "pattern-measurement  v. 0.5"
+print "pattern-measurement  v. 0.6"
 print sys.argv[1] #help me out here kurt not sure what this does
 
 """
