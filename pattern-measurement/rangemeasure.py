@@ -48,17 +48,30 @@ locals().update(results) # Use returned dictionary of parsed values to update th
 
 print('\nParameters')
 print('----------')
-print('project = "' + project + '"')
-print('datafile = "' + datafile + '"')
-print('option = "' + option + '"')
-print('power = ' + str(power))
-print('fstart = ' + str(fstart))
-print('fstop = ' + str(fstop))
-print('npts = ' + str(npts)) #print('npts = %f' % npts)
+print('project = "{0}"'.format(project))
+print('datafile = "{0}"'.format(datafile))
+print('option = "{0}"'.format(option))
+if not isinstance(power, str): # Assume number, print it nicely
+    print('power = {0:+} dBm'.format(power))    # Explicitly include signs
+else:
+    if power == "default":
+        print('power = default (-17 dBm)')
+        # TODO: What is the default power?
+    else:
+        print('ERROR: unknown power setting "{0}"'.format(power))
+if not isinstance(fstart, str): # Assume number, print it nicely 
+    print('fstart = {0:g} Hz'.format(fstart))
+else:
+    print('fstart = ' + fstart) # Presumably fstart is the string 'UNSET'
+if not isinstance(fstop, str):
+    print('fstop = {0:g} Hz'.format(fstop))
+else:
+    print('fstop = ' + fstop)
+print('npts = ' + str(npts))
 print('pol = "' + pol + '"')
-print('ares = ' + str(ares))
-print('start = ' + str(start))
-print('stop = ' + str(stop))
+print('ares = {0} deg'.format(ares))
+print('start = {0} deg'.format(start))
+print('stop = {0} deg'.format(stop))
 print('comments = "' + comments + '"')
 
 errorMsg = ""
