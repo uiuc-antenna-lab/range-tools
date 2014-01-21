@@ -6,7 +6,7 @@ Updated on: Tue Dec 10 2013
 @author: Robert A. Scott
 @author: Brian Gibbons
 """
-#python initiailzation files
+python initiailzation files
 import sys
 import numpy, pyvisa, time, datetime
 from pylab import *
@@ -17,8 +17,8 @@ warnings.filterwarnings("ignore")
 from cmdfileparser import CmdfileParser
 
 print '\n'
-print "pattern-measurement  v. 0.7"
-print sys.argv[1] #help me out here kurt not sure what this does
+print "pattern-measurement  v. 0.8"
+print('Reading "{0}"'.format(sys.argv[1]))
 
 """
 Reading in measurement file data
@@ -31,6 +31,8 @@ option = 'UNSET'
 power = 'default'
 fstart = 'UNSET'
 fstop = 'UNSET'
+fcenter = 'UNSET'
+fbandwidth = 'UNSET'
 npts = 'UNSET'
 pol = 'UNSET'
 ares = 'UNSET'
@@ -56,17 +58,29 @@ if not isinstance(power, str): # Assume number, print it nicely
 else:
     if power == "default":
         print('power = default (-17 dBm)')
-        # TODO: What is the default power?
     else:
         print('ERROR: unknown power setting "{0}"'.format(power))
+        # TODO: throw exception here
 if not isinstance(fstart, str): # Assume number, print it nicely 
     print('fstart = {0:g} Hz'.format(fstart))
 else:
     print('fstart = ' + fstart) # Presumably fstart is the string 'UNSET'
+    
 if not isinstance(fstop, str):
     print('fstop = {0:g} Hz'.format(fstop))
 else:
     print('fstop = ' + fstop)
+    
+if not isinstance(fcenter, str):
+    print('fcenter = {0:g} Hz'.format(fcenter))
+else:
+    print('fcenter = ' + fcenter)
+    
+if not isinstance(fbandwidth, str):
+    print('fbandwidth = {0:g} Hz'.format(fbandwidth))
+else:
+    print('fbandwidth = ' + fbandwidth)
+    
 print('npts = ' + str(npts))
 print('pol = "' + pol + '"')
 print('ares = {0} deg'.format(ares))
@@ -81,10 +95,9 @@ if datafile == 'UNSET':
     errorMsg = errorMsg + '"datafile" variable unset.\n'
 if option == 'UNSET':
     errorMsg = errorMsg + '"option" variable unset.\n'
-if fstart == 'UNSET':
-    errorMsg = errorMsg + '"fstart" variable unset.\n'
-if fstop == 'UNSET':
-    errorMsg = errorMsg + '"fstop" variable unset.\n'
+if ((fstart == 'UNSET') or (fstop == 'UNSET'))          \
+    and ((fcenter == 'UNSET') or (fbandwidth == 'UNSET')):
+    errorMsg = errorMsg + 'Frequency variables unset (fstart and fstop, or fcenter and fbandwidth).\n'
 if npts == 'UNSET':
     errorMsg = errorMsg + '"npts" variable unset.\n'
 if pol == 'UNSET':
@@ -99,8 +112,27 @@ if comments == "":
     print("Comments are not set. This is not recommended.\n")
 
 if errorMsg != "":
-#    print(errorMsg)
-    sys.exit(errorMsg)
+    print("ERROR(S):\n" + errorMsg)
+    # TODO: Throw excepction here
+#    sys.exit("ERROR(S):\n" + errorMsg)
+
+# Compute start and stop frequencies if fcenter and fbandwidth given
+if ((fstart == 'UNSET') or (fstop == 'UNSET')):
+    if (not (fstart == 'UNSET')) or (not (fstop == 'UNSET')):
+        print("\nWARNING: fstart or fstop have been specified but won't be used.")
+    fstart = fcenter - fbandwidth/2.0
+    fstop  = fcenter + fbandwidth/2.0
+    print("\nComputing fstart and fstop based on fcenter and fbandwidth:")
+    print("fstart = {0:g} Hz\nfstop = {1:g} Hz\n".format(fstart, fstop))
+else: # fstart and fstop both given, use those
+    if not ((fcenter == 'UNSET') and (fbandwidth == 'UNSET')):
+        print("WARNING: fcenter and/or fbandwidth have been specified but won't be used.")
+        # TODO: Put in a better warning here?
+
+# TODO: Test file paths for missing directories; either create them or throw an exception now (not at the end of the program after data has been taken)
+
+# TODO: Test to make sure we're not overwriting any files. If so, raise a warning (and prompt?)
+
 
 """
 Setting up GPIB connection parameters
