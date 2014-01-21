@@ -6,7 +6,7 @@ Updated on: Tue Dec 10 2013
 @author: Robert A. Scott
 @author: Brian Gibbons
 """
-python initiailzation files
+#python initialization files
 import sys
 import numpy, pyvisa, time, datetime
 from pylab import *
