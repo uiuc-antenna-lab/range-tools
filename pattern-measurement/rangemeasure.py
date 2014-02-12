@@ -239,8 +239,8 @@ if power != 'default':
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
   
-#initialization of positioner, bypass if sgh option used
-if option != 'sgh':
+#initialization of positioner, bypass if cal option used
+if option != 'cal':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")     #setting A as the primary axis
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
@@ -267,7 +267,7 @@ if option != 'sgh':
             print "Complete"
 
         
-#SET POLARIZATION ON SGH -- do regardless of sgh or real measurement?  issues w/ movement?
+#SET POLARIZATION ON SGH -- do regardless of cal or real measurement?  issues w/ movement?
 print "Setting Rx SGH polarization to",
 pos.write("PRIMARY,B;")                     #selecting 'B' axis to be primary
 pos.write("SCALE,B,360;")                   #changing the scale of the 'B' axis to 360
@@ -341,7 +341,7 @@ stopflag = 0
 pos.write("VELOCITY,A,003.00;")
 
 #MAIN ACQUISITION LOOP
-if option != 'sgh':  #if not in sgh mode, do full measurement
+if option != 'cal':  #if not in cal mode, do full measurement
     pos.write("MOVE,A,CWGO,"+str(stop)+";")        #format this for stop angle
     print "Running pattern measurement"
     time.sleep(2)
@@ -384,7 +384,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         drawProgressBar(ANG[ind]/float(stop))
         pause(0.001)                   #locks up w/o pause
 
-else:   #if sgh mode, take a single measurement with no movement
+else:   #if cal mode, take a single measurement with no movement
     print "Taking standard gain horn measurement"
     s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))
     
@@ -406,7 +406,7 @@ st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 fid.write(st+"\n")
 fid.write("\tDatafile: " + datafile+"\n")
 fid.write("\tFrequency: "+str(fstart)+" - "+str(fstop)+", "+str(npts)+" points\n")
-if option != 'sgh':
+if option != 'cal':
     fid.write("\tRotation: "+str(start)+"-"+str(stop)+" degrees, approx "+str(ares)+" degree resolution\n")
 fid.write('\tPolarization: ' + str(pol)+"\n")
 fid.write(comments+'\n\n')
