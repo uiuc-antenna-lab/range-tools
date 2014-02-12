@@ -7,6 +7,10 @@
 
 # Written by Brian Gibbons
 
+# Version 1.0 - January 21, 2014
+#   -Changes "sgh" option to "cal"
+#   -Adds support for specifying frequency range with center frequency and BW
+
 # Version 0.9 - December 13, 2013
 #   -Adds support for specifying units of power (dBm, W, mW, uW, or nW)
 
@@ -91,17 +95,25 @@ class CmdfileParser(Parser):
         'power' : 'POWER',
         'fstart' : 'FSTART',
         'fstop' : 'FSTOP',
+        'fcenter' : 'FCENTER',
+        'fbandwidth' : 'FBANDWIDTH',
         'npts' : 'NPTS',
         'pol' : 'POL',
         'ares' : 'ARES',
         'start' : 'START',
         'stop' : 'STOP',
-        'measure' : 'MEAS1',
-        'Measure' : 'MEAS2',
-        'MEASURE' : 'MEAS3',
-        'sgh' : 'SGH1',
-        'Sgh' : 'SGH2',
-        'SGH' : 'SGH3',
+        'meas' : 'MEAS1',
+        'Meas' : 'MEAS2',
+        'MEAS' : 'MEAS3',
+        'measure' : 'MEAS4',
+        'Measure' : 'MEAS5',
+        'MEASURE' : 'MEAS6',
+        'cal' : 'CAL1',
+        'Cal' : 'CAL2',
+        'CAL' : 'CAL3',
+        'calibrate' : 'CAL4',
+        'Calibrate' : 'CAL5',
+        'CALIBRATE' : 'CAL6',
         'default' : 'DEFAULT1',
         'Default' : 'DEFAULT2',
         'DEFAULT' : 'DEFAULT3',
@@ -253,20 +265,26 @@ class CmdfileParser(Parser):
     
     def p_optionset(self, p):
         '''optionset : OPTION EQ measure
-                     | OPTION EQ sgh'''
+                     | OPTION EQ cal'''
         p[0] = {'option' :  p[3]}
     
     def p_measure(self, p):
         '''measure : MEAS1
                    | MEAS2
-                   | MEAS3'''
+                   | MEAS3
+                   | MEAS4
+                   | MEAS5
+                   | MEAS6'''
         p[0] = 'measure'
     
-    def p_sgh(self, p):
-        '''sgh : SGH1
-               | SGH2
-               | SGH3'''
-        p[0] = 'sgh'
+    def p_cal(self, p):
+        '''cal : CAL1
+               | CAL2
+               | CAL3
+               | CAL4
+               | CAL5
+               | CAL6'''
+        p[0] = 'cal'
     
     def p_powerset(self, p):
         '''powerset : POWER EQ default
@@ -295,7 +313,7 @@ class CmdfileParser(Parser):
                 # Convert value in nW to dBm
                 p[0] = {'power' : 10*log10(p[3]*1e-6)}
             else: # How'd we get here?! Assume units of dBm
-                print("ERROR: Undefined case in grammar of powerset. Assuming units of dBm.")                
+                print("ERROR: Undefined case in grammar of powerset. Assuming units of dBm.")   # TODO: throw exception here
                 p[0] = {'power' : p[3]}
     
     def p_dbm(self, p):
@@ -336,6 +354,8 @@ class CmdfileParser(Parser):
     def p_freqset(self, p):
         ''' freqset : freqstart
                     | freqstop
+                    | freqcenter
+                    | freqbandwidth
                     | numpoints'''
         p[0] = p[1]
     
@@ -356,6 +376,24 @@ class CmdfileParser(Parser):
             p[0] = {'fstop' : p[3]}
         else: # Second or third rules
             p[0] = {'fstop' : p[3] * (10**p[4])}
+    
+    def p_freqcenter(self, p):
+        '''freqcenter : FCENTER EQ value
+                      | FCENTER EQ value mhz
+                      | FCENTER EQ value ghz'''
+        if (len(p) == 4): # First rule
+            p[0] = {'fcenter' : p[3]}
+        else: # Second or third rules
+            p[0] = {'fcenter' : p[3] * (10**p[4])}
+    
+    def p_freqbandwidth(self, p):
+        '''freqbandwidth : FBANDWIDTH EQ value
+                         | FBANDWIDTH EQ value mhz
+                         | FBANDWIDTH EQ value ghz'''
+        if (len(p) == 4): # First rule
+            p[0] = {'fbandwidth' : p[3]}
+        else: # Second or third rules
+            p[0] = {'fbandwidth' : p[3] * (10**p[4])}
     
     # NOTE: the non-terminals mhz and ghz could be worked into value, in which case
     #       they'd simply be synonymous with *(10**6) and *(10**9), respectively.

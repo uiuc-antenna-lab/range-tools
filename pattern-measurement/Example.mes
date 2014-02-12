@@ -7,9 +7,9 @@ project = "testproj"
 project = 'testproj'
 project = testproj      # No quotes; works in this case, but not recommended
 datasave = 'firstmeas'
-option = sgh
-option = Sgh
-option = SGH
+option = cal
+option = Cal
+option = CAL
 option = measure # This is a comment after a parameter set command
 option = Measure
 option = MEASURE
@@ -77,6 +77,11 @@ fstop = 1950000000
 #fstop = 1950000000.  # NOT allowed: there must always be at least one digit after the decimal point
 fstop = +1950000000.0
 fstop = 1950000000.00000
+
+
+fcenter = 5.0 GHz
+fbandwidth = 4.0 GHz
+
 
 npts = 201
 
