@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 from cmdfileparser import CmdfileParser
 
 print '\n'
-print "pattern-measurement  v. 0.8"
+print "pattern-measurement  v. 0.9"
 print('Reading "{0}"'.format(sys.argv[1]))
 
 """
@@ -39,7 +39,7 @@ ares = 'UNSET'
 start = 'UNSET'
 stop = 'UNSET'
 comments = ''
-
+t_overhead = 10e-3 # [s] magic number
 #LOAD IN TEST PARAMETERS FROM TEXT FILE
 parser = CmdfileParser()
 finput = open(sys.argv[1],'r')
@@ -142,7 +142,7 @@ PNAref = 'GPIB0::16'
 POSref = 'GPIB0::17'
 
 #create instrument objects
-pna = instrument(PNAref)
+pna = instrument(PNAref, values_format = single | big_endian)
 pos = instrument(POSref)
 
 #setting the window on the positioner
@@ -230,7 +230,16 @@ pna.write("DISPlay:WINDow1:TRACe1:FEED 'MyMeas'")  #FEED MyMeas to Trace 1 for d
 pna.write("SENS1:FREQ:STAR "+str(fstart))
 pna.write("SENS1:FREQ:STOP "+str(fstop))
 pna.write("SENS1:SWE:POIN "+str(npts))
-pna.write("SENS1:SWE:TIME .05")
+pna.write("SENS1:SWE:TIME:AUTO ON")
+t_sweep = pna.ask("SENS1:SWE:TIME?")
+print(t_sweep)
+
+#Set output format
+pna.write("FORM REAL,32")
+
+#Calculate velocity
+velocity_assigned = ares/(float(t_sweep)+t_overhead)
+#print("Velocity_assigned = {0} [deg/s]".format(velocity_assigned))
 
 #Set power level
 if power != 'default':
@@ -239,8 +248,8 @@ if power != 'default':
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
   
-#initialization of positioner, bypass if sgh option used
-if option != 'sgh':
+#initialization of positioner, bypass if cal option used
+if option != 'cal':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")     #setting A as the primary axis
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
@@ -332,16 +341,20 @@ Measurement Magic
 ind = 0     #intializing angle and data indeces
 ANG = []    #take initial angle meas
 ANG.append(getpos('A')) 
-s12 = []    #take intial S meas
-junk = pna.ask("CALCulate:DATA? SDATA").split(',')   #have the analyzer write the measurement to the buffer
-s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))   #why do we have to do this twice???
+s12 = np.zeros((npts,1),dtype = complex)
+junk = pna.ask("CALCulate:DATA? SDATA")   #have the analyzer write the measurement to the buffer
+
+#get first data
+data = np.array(pna.ask_for_values("CALCulate:DATA? SDATA"))
+newrow = data[::2]+1j*data[1::2]
+s12 = newrow  
 
 #SET TRAVEL VELOCITY
 stopflag = 0
-pos.write("VELOCITY,A,003.00;")
+pos.write("VELOCITY,A,{:06.2f};".format(velocity_assigned))
 
 #MAIN ACQUISITION LOOP
-if option != 'sgh':  #if not in sgh mode, do full measurement
+if option != 'cal':  #if not in cal mode, do full measurement
     pos.write("MOVE,A,CWGO,"+str(stop)+";")        #format this for stop angle
     print "Running pattern measurement"
     time.sleep(2)
@@ -360,43 +373,46 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
 
                       #pause for positioner to start
     while getvel() != 0:             #motion check loop
-        while getpos('A') <= ANG[ind]+float(ares):        #between measurements loop
-            if abs(getpos('A')-float(stop))<=1 or abs(getpos('A')-float(stop))>=359:             #escape procedure for end <- add stop here
-                stopflag = 1
-                break        
+#        while getpos('A') <= ANG[ind]+float(ares):        #between measurements loop
+#            if abs(getpos('A')-float(stop))<=1 or abs(getpos('A')-float(stop))>=359:             #escape procedure for end <- add stop here
+#                stopflag = 1
+#                break        
         ind =ind+1    
         if stopflag:
             break
                                         #get net measurement set from analyzer
-        s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))
+        
+        data = np.array(pna.ask_for_values("CALCulate:DATA? SDATA"))
+        newrow = data[::2]+1j*data[1::2]
+        s12 = vstack((s12,newrow))
         ANG.append(getpos('A'))
         
                                         #take off one data point for quickplot
         line = s12[ind]
-        qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[1]))))
+        qp = 20*numpy.log10(abs(newrow[0]))
         QPx.append(ANG[ind])
         QPy.append(qp)
         qpobj.set_ydata(QPy)
         qpobj.set_xdata(QPx)            # update the data on quickplot
         draw()                          # redraw the canvas
         
-        
-        drawProgressBar(ANG[ind]/float(stop))
+        print(ANG[ind])
+#        drawProgressBar(ANG[ind]/float(stop))
         pause(0.001)                   #locks up w/o pause
 
-else:   #if sgh mode, take a single measurement with no movement
+else:   #if cal mode, take a single measurement with no movement
     print "Taking standard gain horn measurement"
     s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))
     
 drawProgressBar(1);print "\n"
 
-#CONVERT COLLECTED DATA INTO R+jI form
-print "Converting output data"
-S12 = numpy.empty([len(s12),float(npts)],dtype = complex)
-for ind in range(len(s12)):
-    line = s12[ind]
-    for i in range(int(len(line)/2)):
-        S12[ind,i] =complex(float(line[2*i]),float(line[2*i+1]))
+##CONVERT COLLECTED DATA INTO R+jI form
+#print "Converting output data"
+#S12 = numpy.empty([len(s12),float(npts)],dtype = complex)
+#for ind in range(len(s12)):
+#    line = s12[ind]
+#    for i in range(int(len(line)/2)):
+#        S12[ind,i] =complex(float(line[2*i]),float(line[2*i+1]))
 
 #APPEND PROJECT FILE
 print 'Logging measurement in project file'
@@ -406,7 +422,7 @@ st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 fid.write(st+"\n")
 fid.write("\tDatafile: " + datafile+"\n")
 fid.write("\tFrequency: "+str(fstart)+" - "+str(fstop)+", "+str(npts)+" points\n")
-if option != 'sgh':
+if option != 'cal':
     fid.write("\tRotation: "+str(start)+"-"+str(stop)+" degrees, approx "+str(ares)+" degree resolution\n")
 fid.write('\tPolarization: ' + str(pol)+"\n")
 fid.write(comments+'\n\n')
@@ -415,7 +431,7 @@ fid.close()
 #SAVE DATA IN MAT FORMAT
 freq = numpy.linspace(float(fstart),float(fstop),npts)
 filename = datafile+".mat"
-sio.savemat(filename,{'S12':S12, 'f':freq, 'angle':ANG})
+sio.savemat(filename,{'S12':s12, 'f':freq, 'angle':ANG})
 
 #CLEAN UP
 ioff()
