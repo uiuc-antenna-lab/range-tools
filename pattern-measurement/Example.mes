@@ -1,0 +1,146 @@
+### RANGE MEASUREMENT FILE ###
+# Any time a '#' appears, everything after it until the end of the line is a comment and is ignored.
+
+#FILENAMES	<-- So this entire line is a comment, since it begins with #  -->
+# Filenames may optionally be enclosed in single (') or double (") quotes. Quotes are required if the filename includes spaces, the equals (=) sign, the pound (#) sign, or most special characters. Best to always just put it in quotes.
+project = "testproj"
+project = 'testproj'
+project = testproj      # No quotes; works in this case, but not recommended
+datasave = 'firstmeas'
+option = cal
+option = Cal
+option = CAL
+option = measure # This is a comment after a parameter set command
+option = Measure
+option = MEASURE
+# Also a comment
+
+
+#POWER LEVEL	Comments like this are recommended for readability, but are not required
+# The following (with -10) are all synonymous (spaces and newlines are stripped out). 
+power = -10
+power= -10
+power =-10
+power	=	-10
+power                       =                                -10
+power=-10
+power
+	= -10
+power
+=
+-10
+power = -10.0
+power = -10dBm
+power = -10 dBm # Recommended form (for dBm input)
+power = -10 dbm
+power = -10 DBM
+power = 1e-4 W  # Recommended form (for W input)
+power = 1e-4 w
+power = 1e-4 W
+power = 0.1 mW  # Recommended form (for mW input)
+power = 0.1 mw
+power = 0.1 MW
+power = 100 nW  # Recommended form (for nW input)
+power = 100 nw
+power = 100 NW
+power = default # When a parameter is specified multiple times, the last value set is used, thus this .mes file requests a power set to the 'default' level. Note that if the power setting is omitted in a .mes file, power is set to default and no error is thrown.
+
+# The following all request the same frequencies. This is just to demonstrate the various options for inputing frequency numbers
+#FREQUENCY
+fstart = 245 MHz  # 'MHz' is effectively a synonym for e+6, but is only allowed in the fstart and fstop parameters
+fstart = 245MHz   # Readability suffers here, but this should still be parsed right
+fstart = 245 mhz
+fstart = 245 Mhz
+fstart = 245 MHz  # Recommended format, based on standard SI capitalization rules
+fstart = 245 MHZ
+
+fstop = 1.95 GHz  # 'GHz' is effectively a synonym for e+6, but is only allowed for the fstart and fstop parameters
+fstop = 1.95 ghz
+fstop = 1.95 Ghz
+fstop = 1.95 GHZ
+fstop = 1950 MHz
+#fstop = 1950. MHz  # NOT allowed: there must always be at least one digit after the decimal point
+fstop = 1950.0 MHz
+fstop = 1.95e9
+fstop = 1.95e+9
+fstop = +1.95e+9
+#fstop = 1.95 e+9   # NOT allowed: no spaces between number and exponent letter
+fstop = 1950e6
+#fstop = 1950.e6  # NOT allowed: there must always be at least one digit after the decimal point
+fstop = 1950.0e6
+fstop = 1950e6
+fstop = 19.50e8
+fstop = 0.195e10
+fstop = 0.195e+10
+fstop = .195e10
+fstop = 1950000000
+#fstop = 1950000000.  # NOT allowed: there must always be at least one digit after the decimal point
+fstop = +1950000000.0
+fstop = 1950000000.00000
+
+
+fcenter = 5.0 GHz
+fbandwidth = 4.0 GHz
+
+
+npts = 201
+
+#POLARIZATION
+pol = v
+pol = V
+pol = vert
+pol = Vert
+pol = VERT
+pol = h
+pol = H
+pol = horiz
+pol = Horiz
+pol = HORIZ
+
+#ROTATION
+ares = 0.1
+ares = +0.1	# Any positive number or exponent may optionally be prefixed with a '+' 
+ares = 0.10
+ares = .1
+ares = +.1
+ares = 1e-1
+ares = 1.0e-1
+ares = 0.1e0
+ares = 0.01e1	# Stupid way to write it, but it works
+ares = 0.01e+1
+ares = +0.01e+1
+start = 20
+start = +20
+start = 20.0
+start = +20.0
+start = 2e1
+start = 2.0e1
+start = +2e1
+stop = -180
+stop = -180.0
+stop = -1.8e2
+stop = -1.8e+2
+stop = -1.80e2
+stop = -.18e3
+stop = -0.180e3
+stop = -1.80e02	# Exponents can be multiple digits (but why would you need to?)
+
+# The 'Comments' command (case sensitive!) designates that all following text, all the way to the end of the file, is to be read in as the comment for this measurement.
+# As such, any commands (parameter settings) given after the 'Comments' will NOT be parsed, and will instead just be passed in with the comments string.
+# Whitespace at the very beginning and very end is stripped off.
+
+Comments
+This is a test comment (all the way to the end of the file). All of this should
+be passed through, even though it is on multiple lines.
+
+This parameter setting will NOT be parsed, since it comes after "Comments":
+ares = 0.125
+
+We could have started this comment on the same line as "Comments", or even immediately after the "s" in "Comments" (with no space), and we would get the same result.
+
+1
+2
+3
+Note that whitespace at the end (following the "0") will be stripped off.
+
+4567890    

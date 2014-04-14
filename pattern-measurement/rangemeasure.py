@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Sep 06 14:30:23 2013
-Updated on: Thu Sep 26 2013
+Updated on: Tue Dec 10 2013
 @author: Kurt
 @author: Robert A. Scott
+@author: Brian Gibbons
 """
-#python initiailzation files
+#python initialization files
 import sys
-#import numpy, pyvisa, time, datetime
-#from pylab import *
-#import scipy.io as sio
-#from visa import *
-#import warnings
-#warnings.filterwarnings("ignore")
+import numpy, pyvisa, time, datetime
+from pylab import *
+import scipy.io as sio
+from visa import *
+import warnings
+warnings.filterwarnings("ignore")
 from cmdfileparser import CmdfileParser
 
 print '\n'
-print "pattern-measurement  v. 0.5"
-print sys.argv[1] #help me out here kurt not sure what this does
+print "pattern-measurement  v. 0.8"
+print('Reading "{0}"'.format(sys.argv[1]))
 
 """
 Reading in measurement file data
@@ -30,6 +31,8 @@ option = 'UNSET'
 power = 'default'
 fstart = 'UNSET'
 fstop = 'UNSET'
+fcenter = 'UNSET'
+fbandwidth = 'UNSET'
 npts = 'UNSET'
 pol = 'UNSET'
 ares = 'UNSET'
@@ -46,19 +49,89 @@ results = parser.parse(ftext)
 locals().update(results) # Use returned dictionary of parsed values to update the local variables
 
 print('\nParameters')
-print('@@@@@@@@@@')
-print('project = "%s"' % project)
-print('datafile = "%s"' % datafile)
-print('option = "%s"' % option)
-print('power = "%s"' % power)
-print('fstart = %f' % fstart)
-print('fstop = %f' % fstop)
-print('npts = %f' % npts)
-print('pol = "%s"' % pol)
-print('ares = %f' % ares)
-print('start = %f' % start)
-print('stop = %f' % stop)
-print('comments = "%s"' % comments)
+print('----------')
+print('project = "{0}"'.format(project))
+print('datafile = "{0}"'.format(datafile))
+print('option = "{0}"'.format(option))
+if not isinstance(power, str): # Assume number, print it nicely
+    print('power = {0:+} dBm'.format(power))    # Explicitly include signs
+else:
+    if power == "default":
+        print('power = default (-17 dBm)')
+    else:
+        print('ERROR: unknown power setting "{0}"'.format(power))
+        # TODO: throw exception here
+if not isinstance(fstart, str): # Assume number, print it nicely 
+    print('fstart = {0:g} Hz'.format(fstart))
+else:
+    print('fstart = ' + fstart) # Presumably fstart is the string 'UNSET'
+    
+if not isinstance(fstop, str):
+    print('fstop = {0:g} Hz'.format(fstop))
+else:
+    print('fstop = ' + fstop)
+    
+if not isinstance(fcenter, str):
+    print('fcenter = {0:g} Hz'.format(fcenter))
+else:
+    print('fcenter = ' + fcenter)
+    
+if not isinstance(fbandwidth, str):
+    print('fbandwidth = {0:g} Hz'.format(fbandwidth))
+else:
+    print('fbandwidth = ' + fbandwidth)
+    
+print('npts = ' + str(npts))
+print('pol = "' + pol + '"')
+print('ares = {0} deg'.format(ares))
+print('start = {0} deg'.format(start))
+print('stop = {0} deg'.format(stop))
+print('comments = "' + comments + '"')
+
+errorMsg = ""
+if project == 'UNSET':
+    errorMsg = errorMsg + '"project" variable unset.\n'
+if datafile == 'UNSET':
+    errorMsg = errorMsg + '"datafile" variable unset.\n'
+if option == 'UNSET':
+    errorMsg = errorMsg + '"option" variable unset.\n'
+if ((fstart == 'UNSET') or (fstop == 'UNSET'))          \
+    and ((fcenter == 'UNSET') or (fbandwidth == 'UNSET')):
+    errorMsg = errorMsg + 'Frequency variables unset (fstart and fstop, or fcenter and fbandwidth).\n'
+if npts == 'UNSET':
+    errorMsg = errorMsg + '"npts" variable unset.\n'
+if pol == 'UNSET':
+    errorMsg = errorMsg + '"pol" variable unset.\n'
+if ares == 'UNSET':
+    errorMsg = errorMsg + '"ares" variable unset.\n'
+if start == 'UNSET':
+    errorMsg = errorMsg + '"start" variable unset.\n'
+if stop == 'UNSET':
+    errorMsg = errorMsg + '"stop" variable unset.\n'
+if comments == "":
+    print("Comments are not set. This is not recommended.\n")
+
+if errorMsg != "":
+    print("ERROR(S):\n" + errorMsg)
+    # TODO: Throw excepction here
+#    sys.exit("ERROR(S):\n" + errorMsg)
+
+# Compute start and stop frequencies if fcenter and fbandwidth given
+if ((fstart == 'UNSET') or (fstop == 'UNSET')):
+    if (not (fstart == 'UNSET')) or (not (fstop == 'UNSET')):
+        print("\nWARNING: fstart or fstop have been specified but won't be used.")
+    fstart = fcenter - fbandwidth/2.0
+    fstop  = fcenter + fbandwidth/2.0
+    print("\nComputing fstart and fstop based on fcenter and fbandwidth:")
+    print("fstart = {0:g} Hz\nfstop = {1:g} Hz\n".format(fstart, fstop))
+else: # fstart and fstop both given, use those
+    if not ((fcenter == 'UNSET') and (fbandwidth == 'UNSET')):
+        print("WARNING: fcenter and/or fbandwidth have been specified but won't be used.")
+        # TODO: Put in a better warning here?
+
+# TODO: Test file paths for missing directories; either create them or throw an exception now (not at the end of the program after data has been taken)
+
+# TODO: Test to make sure we're not overwriting any files. If so, raise a warning (and prompt?)
 
 
 """
@@ -149,25 +222,25 @@ print ". . . Complete"
 pna.write("SYST:FPReset")                   #factory preset
 pna.write("DISPlay:WINDow:STATE ON")        #turn on a window for disp
 
-#Setup S21 measurement aliased as MyMeas
+#Setup S12 measurement aliased as MyMeas
 pna.write("CALCulate:PARameter:DEFine:EXT 'MyMeas', S12")
 pna.write("DISPlay:WINDow1:TRACe1:FEED 'MyMeas'")  #FEED MyMeas to Trace 1 for display
 
 #Set frequency params
-pna.write("SENS1:FREQ:STAR "+fstart)
-pna.write("SENS1:FREQ:STOP "+fstop)
-pna.write("SENS1:SWE:POIN "+npts)
+pna.write("SENS1:FREQ:STAR "+str(fstart))
+pna.write("SENS1:FREQ:STOP "+str(fstop))
+pna.write("SENS1:SWE:POIN "+str(npts))
 pna.write("SENS1:SWE:TIME .05")
 
 #Set power level
 if power != 'default':
-    pna.write("SOUR:POW2 "+power)
+    pna.write("SOUR:POW2 "+str(power))
 
 #select measurement
 pna.write("CALC:PAR:SEL 'MyMeas'")
   
-#initialization of positioner, bypass if sgh option used
-if option != 'sgh':
+#initialization of positioner, bypass if cal option used
+if option != 'cal':
     pos.write("ASYNCHRONOUS;")  #allow for commands on the pos. while turning
     pos.write("PRIMARY,A;")     #setting A as the primary axis
     pos.write("SCALE,A,360;")   #set scale to 360, might let this be a free param
@@ -176,7 +249,7 @@ if option != 'sgh':
     position = getpos('A')
     if needinit('A'):
         if position >= 180:         #go via shortest path to the start position
-            pos.write("MOVE,A,CWCHECK,"+start+";")    #<- add start pos. here
+            pos.write("MOVE,A,CWCHECK,"+str(start)+";")    #<- add start pos. here
             time.sleep(2)        
             print "Moving to initial turntable position", 
             while getvel() != 0:
@@ -185,7 +258,7 @@ if option != 'sgh':
             print "Complete"
 
         else:
-            pos.write("MOVE,A,CCWCHECK,"+start+";") 
+            pos.write("MOVE,A,CCWCHECK,"+str(start)+";") 
             time.sleep(2) 
             print "Moving to intial turntable position", 
             while getvel() != 0:
@@ -194,7 +267,7 @@ if option != 'sgh':
             print "Complete"
 
         
-#SET POLARIZATION ON SGH -- do regardless of sgh or real measurement?  issues w/ movement?
+#SET POLARIZATION ON SGH -- do regardless of cal or real measurement?  issues w/ movement?
 print "Setting Rx SGH polarization to",
 pos.write("PRIMARY,B;")                     #selecting 'B' axis to be primary
 pos.write("SCALE,B,360;")                   #changing the scale of the 'B' axis to 360
@@ -259,17 +332,17 @@ Measurement Magic
 ind = 0     #intializing angle and data indeces
 ANG = []    #take initial angle meas
 ANG.append(getpos('A')) 
-s21 = []    #take intial S meas
+s12 = []    #take intial S meas
 junk = pna.ask("CALCulate:DATA? SDATA").split(',')   #have the analyzer write the measurement to the buffer
-s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))   #why do we have to do this twice???
+s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))   #why do we have to do this twice???
 
 #SET TRAVEL VELOCITY
 stopflag = 0
 pos.write("VELOCITY,A,003.00;")
 
 #MAIN ACQUISITION LOOP
-if option != 'sgh':  #if not in sgh mode, do full measurement
-    pos.write("MOVE,A,CWGO,"+stop+";")        #format this for stop angle
+if option != 'cal':  #if not in cal mode, do full measurement
+    pos.write("MOVE,A,CWGO,"+str(stop)+";")        #format this for stop angle
     print "Running pattern measurement"
     time.sleep(2)
 
@@ -281,7 +354,7 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
     qpobj, = plot(0,0)
     QPx = []
     QPy = []
-    title('Uncalibrated Pattern Data '+fstart+' Hz')
+    title('Uncalibrated Pattern Data '+str(fstart)+' Hz')
     ylabel('Thru power, dB')
     xlabel('Rotation, deg')
 
@@ -295,11 +368,11 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         if stopflag:
             break
                                         #get net measurement set from analyzer
-        s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
+        s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))
         ANG.append(getpos('A'))
         
                                         #take off one data point for quickplot
-        line = s21[ind]
+        line = s12[ind]
         qp = 20*numpy.log10(abs(complex(float(line[0]),float(line[1]))))
         QPx.append(ANG[ind])
         QPy.append(qp)
@@ -311,19 +384,19 @@ if option != 'sgh':  #if not in sgh mode, do full measurement
         drawProgressBar(ANG[ind]/float(stop))
         pause(0.001)                   #locks up w/o pause
 
-else:   #if sgh mode, take a single measurement with no movement
+else:   #if cal mode, take a single measurement with no movement
     print "Taking standard gain horn measurement"
-    s21.append(pna.ask("CALCulate:DATA? SDATA").split(','))
+    s12.append(pna.ask("CALCulate:DATA? SDATA").split(','))
     
 drawProgressBar(1);print "\n"
 
 #CONVERT COLLECTED DATA INTO R+jI form
 print "Converting output data"
-S21 = numpy.empty([len(s21),float(npts)],dtype = complex)
-for ind in range(len(s21)):
-    line = s21[ind]
+S12 = numpy.empty([len(s12),float(npts)],dtype = complex)
+for ind in range(len(s12)):
+    line = s12[ind]
     for i in range(int(len(line)/2)):
-        S21[ind,i] =complex(float(line[2*i]),float(line[2*i+1]))
+        S12[ind,i] =complex(float(line[2*i]),float(line[2*i+1]))
 
 #APPEND PROJECT FILE
 print 'Logging measurement in project file'
@@ -332,17 +405,17 @@ ts = time.time()
 st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 fid.write(st+"\n")
 fid.write("\tDatafile: " + datafile+"\n")
-fid.write("\tFrequency: "+fstart+" - "+fstop+", "+npts+" points\n")
-if option != 'sgh':
-    fid.write("\tRotation: "+start+"-"+stop+" degrees, approx "+ares+" degree resolution\n")
-fid.write('\tPolarization: ' + pol+"\n")
+fid.write("\tFrequency: "+str(fstart)+" - "+str(fstop)+", "+str(npts)+" points\n")
+if option != 'cal':
+    fid.write("\tRotation: "+str(start)+"-"+str(stop)+" degrees, approx "+str(ares)+" degree resolution\n")
+fid.write('\tPolarization: ' + str(pol)+"\n")
 fid.write(comments+'\n\n')
 fid.close()    
 
 #SAVE DATA IN MAT FORMAT
 freq = numpy.linspace(float(fstart),float(fstop),npts)
 filename = datafile+".mat"
-sio.savemat(filename,{'S21':S21, 'f':freq, 'angle':ANG})
+sio.savemat(filename,{'S12':S12, 'f':freq, 'angle':ANG})
 
 #CLEAN UP
 ioff()
