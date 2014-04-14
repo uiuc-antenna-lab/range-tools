@@ -157,12 +157,14 @@ def DemoPlot(case, thetaScale = 1.0, phiScale = 1.0j):
     
     return
 
-def PlotCutPlane2d(data, cutPlane, plotdB = False, elPlanePhi = "0 deg",
-                   angleMax = "auto", dBminr = -80, plotStr = 'b.-'):
+def PlotCutPlane(data, cutPlane, plotdB = False, elPlanePhi = "0 deg",
+                   angleMax = "auto", dBminr = -80, plotStr = 'b.-', dBpower = False):
     import matplotlib.pyplot as plt
     from numpy import pi
     
     cutPlane = str.lower(cutPlane)
+    if (len(cutPlane) > 2):
+        cutPlane = cutPlane[0:2]
     if ((cutPlane != "az") and (cutPlane != "el")):
         print("Undefined cutplane type. Must be either 'az' or 'el'.")
         return
@@ -179,9 +181,12 @@ def PlotCutPlane2d(data, cutPlane, plotdB = False, elPlanePhi = "0 deg",
     
     if (plotdB):
         if (np.min(data) < 0):
-            print("WARNING: negative data value(s) given. Replacing with +1e-20")
+            print("WARNING: data values <= 0 given. Replacing with +1e-20")
         data = np.where(data <= 0, 1e-20, data)
-        data = 20*np.log10(data)
+        if (not dBpower):
+            data = 20*np.log10(data)
+        else:
+            data = 10*np.log10(data)
         a = plt.gca()
         ymin = np.max((dBminr, np.min(data)))
         ymax = np.max(data)

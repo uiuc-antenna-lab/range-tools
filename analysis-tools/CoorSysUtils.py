@@ -6,6 +6,11 @@ Created on Thu Apr 10 17:01:29 2014
 """
 
 def sph2cart(r, theta, phi):
+    """ Convert a vector in spherical coordinates (r, theta, phi) to
+        Cartesian coordinates (x, y, z).
+        
+        Note that theta and phi are in radians.
+    """
     from numpy import sin, cos
     x = r * sin(theta) * cos(phi)
     y = r * sin(theta) * sin(phi)
@@ -13,6 +18,11 @@ def sph2cart(r, theta, phi):
     return [x, y, z]
 
 def cart2sph(x, y, z):
+    """ Convert a vector in Cartesian coordinates (x, y, z) to spherical
+        coordinates (r, theta, phi).
+        
+        Note that theta and phi are in radians.
+    """
     from numpy import sqrt, arccos, arctan2
     r = sqrt(x**2 + y**2 + z**2)
     theta = arccos(z / r)
@@ -45,7 +55,6 @@ def cartPtSphPhi(x, y, z):
     r, t, p = cart2sph(x/mag, y/mag, z/mag)
     return [-sin(p), cos(p), zeros_like(p)]
 
-# TODO: Update function strings
 def cartPtSphRx(x, y, z):
     """ Return Cartesian x component of the spherical vector r-hat at
         the point (x,y,z).

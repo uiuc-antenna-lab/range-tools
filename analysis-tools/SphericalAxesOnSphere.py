@@ -4,6 +4,9 @@ Created on Thu Apr 10 17:00:24 2014
 
 @author: Brian Gibbons
 """
+# Plot the local spherical axes vectors (r-hat, theta-hat, phi-hat) at various
+# positions on a sphere.
+
 import numpy as np
 from numpy import pi
 import CoorSysUtils as cs
