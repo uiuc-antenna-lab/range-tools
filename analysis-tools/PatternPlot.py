@@ -172,11 +172,14 @@ def DemoPlot(case = 0, thetaVal = 1.0, phiVal = 1.0j):
     return
 
 
-def PlotCutPlane(data, cutPlane, plotdB = False, elPlanePhi = "0 deg",
-                   angleMax = "auto", dBminr = -80, plotStr = 'b.-', 
-                   dBpower = False):
+def PlotCutPlane(angle, data, cutPlane, normalize = False, plotdB = False, 
+                 dBmin = -60, dBpower = False, plotStr = 'b.-'):
     import matplotlib.pyplot as plt
-    from numpy import pi
+    
+    if ((data.dtype != 'float32') and (data.dtype != 'float64')):
+        print("ERROR: data must be of type 'float32' or 'float64'.")
+        print("       Actual data type: dtype = {}".format(data.dtype))
+        return
     
     cutPlane = str.lower(cutPlane)
     if (len(cutPlane) > 2):
@@ -184,42 +187,41 @@ def PlotCutPlane(data, cutPlane, plotdB = False, elPlanePhi = "0 deg",
     if ((cutPlane != "az") and (cutPlane != "el")):
         print("Undefined cutplane type. Must be either 'az' or 'el'.")
         return
+
+    d = np.copy(data)
+    if (normalize):
+        d /= np.max(np.abs(d))
     
-    if (angleMax == "auto"):
-        if (cutPlane == "az"):
-            angleMax = 2*pi
-        else: # (cutPlane == "el"):
-            angleMax = pi
-
-    angle = np.linspace(0, angleMax, len(data))
-
+    plt.figure()
     sp = plt.subplot(111, projection='polar')
     
     if (plotdB):
-        if (np.min(data) < 0):
-            print("WARNING: data values <= 0 given. Replacing with +1e-20")
-        data = np.where(data <= 0, 1e-20, data)
-        if (not dBpower):
-            data = 20*np.log10(data)
+        if (dBpower):
+            dBbase = 10.0
         else:
-            data = 10*np.log10(data)
+            dBbase = 20.0
+        d = np.abs(d)
+        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
+        d = dBbase*np.log10(d)
+        
         a = plt.gca()
-        ymin = np.max((dBminr, np.min(data)))
-        ymax = np.max(data)
+#        ymin = np.max((dBmin, np.min(d)))
+        ymin = dBmin
+        ymax = np.max(d)
         a.set_ylim(ymin, ymax)
         a.set_yticks(np.linspace(ymin, ymax, 5))
     
-    plt.polar(angle, data, plotStr)
+    plt.polar(np.deg2rad(angle), d, plotStr)
     
     if (cutPlane == "az"):
-        plt.title("Azimuth Cutplane (theta = 90 deg)")
+        plt.title("Azimuth Cutplane")
     else: #(cutPlane == "el"):
-        plt.title("Elevation Cutplane (phi = {})".format(elPlanePhi))
+        plt.title("Elevation Cutplane")
         # Now set angle to start at top and increase clockwise
         sp.set_theta_zero_location("N")
         sp.set_theta_direction(-1) # Clockwise
     
-    plt.show()
+    plt.show(block = False)
     
     return
 
@@ -231,8 +233,9 @@ def PlotCutPlane3d():
     return
 
 
-def PlotCutPlaneFreqSweep2D(angle, freq, data, plotdB = False, dBmin = -60,
-                          normalize = False, plotStr = 'b.-', dBpower = False):
+def PlotCutPlaneFreqSweep2D(angle, freq, data, normalize = False,
+                            plotdB = False, dBmin = -60, dBpower = False,
+                            plotStr = 'b.-'):
     import matplotlib.pyplot as plt
     
     if ((data.dtype != 'float32') and (data.dtype != 'float64')):
@@ -240,17 +243,24 @@ def PlotCutPlaneFreqSweep2D(angle, freq, data, plotdB = False, dBmin = -60,
         print("       Actual data type: dtype = {}".format(data.dtype))
         return
     
+    d = np.copy(data)
     if (normalize):
-        data /= np.max(np.abs(data))
+        labelVal = "Relative"
+        d /= np.max(np.abs(d))
+    else:
+        labelVal = "Absolute"
     
     if (plotdB):
+        labelType = "Decibels"
         if (dBpower):
             dBbase = 10.0
         else:
             dBbase = 20.0
-        data = np.abs(data)
-        data = np.where(data < 10**(dBmin / dBbase), 10**(dBmin / dBbase), data)
-        data = dBbase*np.log10(data)
+        d = np.abs(d)
+        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
+        d = dBbase*np.log10(d)
+    else:
+        labelType = "Linear"
     
     # Good-looking colormaps:
     "gist_rainbow"
@@ -261,23 +271,24 @@ def PlotCutPlaneFreqSweep2D(angle, freq, data, plotdB = False, dBmin = -60,
     
     angI = np.argsort(angle)
     a = angle[angI]
-    data = data[angI, :]
+    d = d[angI, :]
     
-    plt.pcolormesh(a, freq, data.T, cmap = "gist_rainbow_r")
+    plt.figure()
+    plt.pcolormesh(a, freq, d.T, cmap = "gist_rainbow_r")
     plt.axis('tight')
     plt.xlabel('Angle [deg]')
     plt.xticks(np.arange(0, 360 + 45, 45))
     plt.ylabel('Freq [Hz]')
     cb = plt.colorbar()
-#    cb.set_label("Normalized |S12|")
+    cb.set_label(labelType + " " + labelVal)
     plt.grid()
-    plt.show()
+    plt.show(block = False)
     
     return
 
 
-def PlotCutPlaneFreqSweep3D(angle, freq, data, plotdB = False, dBmin = -60,
-                          normalize = False, dBpower = False):
+def PlotCutPlaneFreqSweep3D(angle, freq, data, normalize = False,
+                            plotdB = False, dBmin = -60, dBpower = False):
 #    import mayavi
     import mayavi.mlab as mlab
     
@@ -286,23 +297,31 @@ def PlotCutPlaneFreqSweep3D(angle, freq, data, plotdB = False, dBmin = -60,
         print("       Actual data type: dtype = {}".format(data.dtype))
         return
     
+    d = np.copy(data)
     if (normalize):
-        data /= np.max(np.abs(data))
+        labelVal = "Relative"
+        d /= np.max(np.abs(d))
+    else:
+        labelVal = "Absolute"
     
     if (plotdB):
+        labelType = "Decibels"
         if (dBpower):
             dBbase = 10.0
         else:
             dBbase = 20.0
-        data = np.abs(data)
-        data = np.where(data < 10**(dBmin / dBbase), 10**(dBmin / dBbase), data)
-        data = dBbase*np.log10(data)
+        d = np.abs(d)
+        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
+        d = dBbase*np.log10(d)
+    else:
+        labelType = "Linear"
         
     # Code from http://stackoverflow.com/questions/13456845/how-to-change-the-font-type-and-size-in-mayavi-with-code#13464738
     # and from http://stackoverflow.com/questions/19825520/enthought-canopy-mayavi-font-size-bug
     # and from auto-generated code using "record" function of mayavi dialog box
 
 #    from numpy import array
+#    mlab.figure()
     try:
         engine = mayavi.engine
     except NameError:
@@ -312,14 +331,14 @@ def PlotCutPlaneFreqSweep3D(angle, freq, data, plotdB = False, dBmin = -60,
     if len(engine.scenes) == 0:
         engine.new_scene()
 
-    mlab.surf(angle, freq, data, 
+    mlab.surf(angle, freq, d, 
               extent=[0, len(angle),
                       0, len(freq), 0,
                       np.min((len(angle), len(freq)))])
     
     ax = mlab.axes(ranges = [np.min(angle), np.max(angle), 
                              np.min(freq), np.max(freq), 
-                             np.min(data), np.max(data)],
+                             np.min(d), np.max(d)],
                     nb_labels = 3, xlabel = "Angle [deg]", 
                     ylabel = "Freq [Hz]", zlabel = "Magnitude")
     axes = engine.scenes[0].children[0].children[0].children[0].children[0].children[1]
@@ -331,7 +350,129 @@ def PlotCutPlaneFreqSweep3D(angle, freq, data, plotdB = False, dBmin = -60,
     axes.label_text_property.bold = False
     axes.label_text_property.shadow = True
     
+    module_manager = engine.scenes[0].children[0].children[0].children[0].children[0]
+    module_manager.scalar_lut_manager.title_text_property.shadow = True
+    module_manager.scalar_lut_manager.label_text_property.shadow = True
+    module_manager.scalar_lut_manager.shadow = True
+    module_manager.scalar_lut_manager.title_text_property.font_family = 'times'
+    
+    mlab.scalarbar(orientation = "vertical", nb_labels = 5,
+                   title = labelType + " " + labelVal)
+    
     mlab.view(azimuth = 225, elevation = 45)
+    
+    return
+
+
+def PlotCutPlaneFreqSweep3DPolar(angle, freq, data, normalize = False, 
+                                 plotdB = False, dBmin = -60, linmin = 0, 
+                                 dBpower = False):
+    import mayavi.mlab as mlab
+#    import mayavi.tools as tools
+    
+    if ((data.dtype != 'float32') and (data.dtype != 'float64')):
+        print("ERROR: data must be of type 'float32' or 'float64'.")
+        print("       Actual data type: dtype = {}".format(data.dtype))
+        return
+    
+    d = np.copy(data)
+    if (normalize):
+        d /= np.max(np.abs(d))
+        labelVal = "Relative"
+    else:
+        labelVal = "Absolute"
+    
+    if (plotdB):
+        labelType = "Decibels"
+        if (dBpower):
+            dBbase = 10.0
+        else:
+            dBbase = 20.0
+        d = np.abs(d)
+        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
+        d = dBbase*np.log10(d)
+        dMin = np.max((np.min(d), dBmin))
+
+    else:
+        labelType = "Linear"
+        d = np.where(d < linmin, linmin, d)
+        dMin = np.max((np.min(d), linmin))
+    
+    dMax = np.max(d)
+    dRange = np.max(d) - dMin
+    radius = (d - dMin) / dRange  # Scale d to range [0, 1]
+    
+    xd = np.tile(np.cos(np.deg2rad(angle)), (len(freq), 1)).T * radius
+    yd = np.tile(np.sin(np.deg2rad(angle)), (len(freq), 1)).T * radius
+    zd = np.tile(freq, (len(angle), 1))
+    
+    xMax = np.max(xd)
+    xMin = np.min(xd)
+    yMax = np.max(yd)
+    yMin = np.min(yd)
+    
+    # Code from http://stackoverflow.com/questions/13456845/how-to-change-the-font-type-and-size-in-mayavi-with-code#13464738
+    # and from http://stackoverflow.com/questions/19825520/enthought-canopy-mayavi-font-size-bug
+    # and from auto-generated code using "record" function of mayavi dialog box
+
+#    from numpy import array
+#    try:
+#        engine = mayavi.engine
+#    except NameError:
+#        from mayavi.api import Engine
+#        engine = Engine()
+#        engine.start()
+#    if len(engine.scenes) == 0:
+#        engine.new_scene()
+
+    mlab.figure()
+    mlab.mesh(xd, yd, zd, scalars = d, scale_mode = "scalar",
+              extent=[xMin, xMax, yMin, yMax, 0, 10])
+    
+#    ax = mlab.axes(ranges = [xMin, xMax, yMin, yMax, 
+    ax = mlab.axes(ranges = [-dMax, dMax, -dMax, dMax, 
+                             np.min(freq), np.max(freq)],
+                   extent = [-1, 1, -1, 1, 0, 10],
+                   nb_labels = 5, zlabel = "Freq [Hz]",
+                   z_axis_visibility = True,
+                   x_axis_visibility = True,
+                   y_axis_visibility = True)
+    
+    mlab.scalarbar(orientation = "vertical", nb_labels = 5,
+                   title = labelType + " " + labelVal)
+    mlab.view(azimuth = 225, elevation = 45)
+    
+##    tools.pipeline.scalar_cut_plane()
+#    
+##    mlab.figure()
+##    mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(xd, yd, zd, d),
+##                                     extent = [-1, 1, -1, 1, 0, 10],
+##                                     slice_index = 0,
+##                                     plane_orientation = "z_axes")
+#    
+#    
+#    from mayavi.modules.outline import Outline
+#    from mayavi.modules.image_plane_widget import ImagePlaneWidget
+#
+#    mlab.figure()
+#    src = mlab.pipeline.scalar_field(xd, yd, zd, d)
+#    mlab.pipeline.add_dataset(src)
+##    mayavi.add_source(src)
+#    mlab.pipeline.ImagePlaneWidgetFactory(src)
+##    mayavi.add_module(Outline())
+##    mayavi.add_module(ImagePlaneWidget())
+    
+    
+#    axes = engine.scenes[0].children[0].children[0].children[0].children[0].children[1]
+#    
+#    ax.axes.font_factor = 1.0   # Make font smaller; value in range [1, 2]
+#    axes.title_text_property.bold = False
+#    axes.title_text_property.shadow = True
+#    axes.label_text_property.font_family = 'times'
+#    axes.label_text_property.bold = False
+#    axes.label_text_property.shadow = True
+    
+    
     
     return
 
