@@ -172,8 +172,24 @@ def DemoPlot(case = 0, thetaVal = 1.0, phiVal = 1.0j):
     return
 
 
-def PlotCutPlane(angle, data, cutPlane, normalize = False, plotdB = False, 
-                 dBmin = -60, dBpower = False, plotStr = 'b.-'):
+def NiceScale(datamin, datamax, stepsize):
+    mintick = np.trunc(datamin / float(stepsize)) * stepsize
+    if (mintick < datamin):
+        mintick += stepsize
+    maxtick = np.trunc(datamax / float(stepsize)) * stepsize
+    if (maxtick > datamax):
+        maxtick -= stepsize
+
+    ticks = np.hstack((datamin,
+                       np.arange(mintick, maxtick, stepsize),
+                       maxtick, # Since arange excludes the end point
+                       datamax))    
+    return ticks
+
+
+def PlotCutPlane(angle, data, cutPlane, normalize = False, plotdB = False,
+                 dataIndB = False, dBmin = -60, dBpower = False,
+                 plotStr = 'b.-'):
     import matplotlib.pyplot as plt
     
     if ((data.dtype != 'float32') and (data.dtype != 'float64')):
@@ -190,26 +206,37 @@ def PlotCutPlane(angle, data, cutPlane, normalize = False, plotdB = False,
 
     d = np.copy(data)
     if (normalize):
-        d /= np.max(np.abs(d))
+        if (dataIndB):
+            d -= np.max(d)
+        else:
+            d /= np.max(np.abs(d))
     
     plt.figure()
     sp = plt.subplot(111, projection='polar')
     
     if (plotdB):
-        if (dBpower):
-            dBbase = 10.0
-        else:
-            dBbase = 20.0
-        d = np.abs(d)
-        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
-        d = dBbase*np.log10(d)
+        if (not dataIndB):
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = np.abs(d)
+            d = dBbase*np.log10(d)
+        d = np.where(d < dBmin, dBmin, d)
         
         a = plt.gca()
 #        ymin = np.max((dBmin, np.min(d)))
         ymin = dBmin
         ymax = np.max(d)
         a.set_ylim(ymin, ymax)
-        a.set_yticks(np.linspace(ymin, ymax, 5))
+        a.set_yticks(NiceScale(ymin, ymax, 10))
+    
+    if ((not plotdB) and (dataIndB)): # Convert to linear
+        if (dBpower):
+            dBbase = 10.0
+        else:
+            dBbase = 20.0
+        d = 10**(d / dBbase)
     
     plt.polar(np.deg2rad(angle), d, plotStr)
     
@@ -234,8 +261,8 @@ def PlotCutPlane3d():
 
 
 def PlotCutPlaneFreqSweep2D(angle, freq, data, normalize = False,
-                            plotdB = False, dBmin = -60, dBpower = False,
-                            plotStr = 'b.-'):
+                            plotdB = False, dataIndB = False, dBmin = -60,
+                            dBpower = False, plotStr = 'b.-'):
     import matplotlib.pyplot as plt
     
     if ((data.dtype != 'float32') and (data.dtype != 'float64')):
@@ -246,21 +273,31 @@ def PlotCutPlaneFreqSweep2D(angle, freq, data, normalize = False,
     d = np.copy(data)
     if (normalize):
         labelVal = "Relative"
-        d /= np.max(np.abs(d))
+        if (dataIndB):
+            d -= np.max(d)
+        else:
+            d /= np.max(np.abs(d))
     else:
         labelVal = "Absolute"
     
     if (plotdB):
         labelType = "Decibels"
-        if (dBpower):
-            dBbase = 10.0
-        else:
-            dBbase = 20.0
-        d = np.abs(d)
-        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
-        d = dBbase*np.log10(d)
+        if (not dataIndB):
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = np.abs(d)
+            d = dBbase*np.log10(d)
+        d = np.where(d < dBmin, dBmin, d)
     else:
         labelType = "Linear"
+        if (dataIndB):  # Convert to linear
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = 10**(d / dBbase)
     
     # Good-looking colormaps:
     "gist_rainbow"
@@ -277,10 +314,14 @@ def PlotCutPlaneFreqSweep2D(angle, freq, data, normalize = False,
     plt.pcolormesh(a, freq, d.T, cmap = "gist_rainbow_r")
     plt.axis('tight')
     plt.xlabel('Angle [deg]')
-    plt.xticks(np.arange(0, 360 + 45, 45))
+    plt.xticks(NiceScale(np.min(a), np.max(a), 45))
     plt.ylabel('Freq [Hz]')
     cb = plt.colorbar()
     cb.set_label(labelType + " " + labelVal)
+    if (plotdB):
+        cb.set_ticks(NiceScale(np.min(d), np.max(d), 10))
+    else:
+        cb.set_ticks(NiceScale(np.min(d), np.max(d), 0.25))
     plt.grid()
     plt.show(block = False)
     
@@ -288,7 +329,8 @@ def PlotCutPlaneFreqSweep2D(angle, freq, data, normalize = False,
 
 
 def PlotCutPlaneFreqSweep3D(angle, freq, data, normalize = False,
-                            plotdB = False, dBmin = -60, dBpower = False):
+                            plotdB = False, dataIndB = False, dBmin = -60, 
+                            dBpower = False):
 #    import mayavi
     import mayavi.mlab as mlab
     
@@ -300,22 +342,32 @@ def PlotCutPlaneFreqSweep3D(angle, freq, data, normalize = False,
     d = np.copy(data)
     if (normalize):
         labelVal = "Relative"
-        d /= np.max(np.abs(d))
+        if (dataIndB):
+            d -= np.max(d)
+        else:
+            d /= np.max(np.abs(d))
     else:
         labelVal = "Absolute"
     
     if (plotdB):
         labelType = "Decibels"
-        if (dBpower):
-            dBbase = 10.0
-        else:
-            dBbase = 20.0
-        d = np.abs(d)
-        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
-        d = dBbase*np.log10(d)
+        if (not dataIndB):
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = np.abs(d)
+            d = dBbase*np.log10(d)
+        d = np.where(d < dBmin, dBmin, d)
     else:
         labelType = "Linear"
-        
+        if (dataIndB):  # Convert to linear
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = 10**(d / dBbase)
+    
     # Code from http://stackoverflow.com/questions/13456845/how-to-change-the-font-type-and-size-in-mayavi-with-code#13464738
     # and from http://stackoverflow.com/questions/19825520/enthought-canopy-mayavi-font-size-bug
     # and from auto-generated code using "record" function of mayavi dialog box
@@ -365,8 +417,8 @@ def PlotCutPlaneFreqSweep3D(angle, freq, data, normalize = False,
 
 
 def PlotCutPlaneFreqSweep3DPolar(angle, freq, data, normalize = False, 
-                                 plotdB = False, dBmin = -60, linmin = 0, 
-                                 dBpower = False):
+                                 plotdB = False, dataIndB = False, dBmin = -60, 
+                                 linmin = 0, dBpower = False):
     import mayavi.mlab as mlab
 #    import mayavi.tools as tools
     
@@ -377,24 +429,34 @@ def PlotCutPlaneFreqSweep3DPolar(angle, freq, data, normalize = False,
     
     d = np.copy(data)
     if (normalize):
-        d /= np.max(np.abs(d))
         labelVal = "Relative"
+        if (dataIndB):
+            d -= np.max(d)
+        else:
+            d /= np.max(np.abs(d))
     else:
         labelVal = "Absolute"
     
     if (plotdB):
         labelType = "Decibels"
-        if (dBpower):
-            dBbase = 10.0
-        else:
-            dBbase = 20.0
-        d = np.abs(d)
-        d = np.where(d < 10**(dBmin / dBbase), 10**(dBmin / dBbase), d)
-        d = dBbase*np.log10(d)
+        if (not dataIndB):
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = np.abs(d)
+            d = dBbase*np.log10(d)
+        d = np.where(d < dBmin, dBmin, d)
         dMin = np.max((np.min(d), dBmin))
 
     else:
         labelType = "Linear"
+        if (dataIndB):  # Convert to linear
+            if (dBpower):
+                dBbase = 10.0
+            else:
+                dBbase = 20.0
+            d = 10**(d / dBbase)
         d = np.where(d < linmin, linmin, d)
         dMin = np.max((np.min(d), linmin))
     
